@@ -27,11 +27,11 @@ namespace PortraitBuilder.Parser
 
         public string BaseDir { get; }
 
-        public string InterfaceDirectory => System.IO.Path.Combine(BaseDir, "interface");
+        public string InterfaceDirectory => Path.Combine(BaseDir, "interface");
 
-        public string PortraitsDirectory => System.IO.Path.Combine(InterfaceDirectory, "portraits");
+        public string PortraitsDirectory => Path.Combine(InterfaceDirectory, "portraits");
 
-        public string PortraitOffsetsDirectory => System.IO.Path.Combine(InterfaceDirectory, "portrait_offsets");
+        public string PortraitOffsetsDirectory => Path.Combine(InterfaceDirectory, "portrait_offsets");
 
         public PortraitReader(string dir)
         {
@@ -60,7 +60,7 @@ namespace PortraitBuilder.Parser
                 }
                 else
                 {
-                    logger.Debug("Folder not found: " + System.IO.Path.Combine(BaseDir, "interface"));
+                    logger.Debug("Folder not found: " + Path.Combine(BaseDir, "interface"));
                 }
 
                 // interface/portraits seems to be loaded after interface/, and override (cf byzantinegfx)
@@ -70,7 +70,7 @@ namespace PortraitBuilder.Parser
                 }
                 else
                 {
-                    logger.Debug("Folder not found: " + System.IO.Path.Combine(BaseDir, "interface", "portraits"));
+                    logger.Debug("Folder not found: " + Path.Combine(BaseDir, "interface", "portraits"));
                 }
 
                 foreach (string fileName in fileNames)
@@ -80,21 +80,11 @@ namespace PortraitBuilder.Parser
 
                 if (Directory.Exists(PortraitOffsetsDirectory))
                 {
-                    var offsetFileNames = Directory.EnumerateFiles(PortraitOffsetsDirectory, "*.txt");
-                    foreach (string offsetFileName in offsetFileNames)
-                    {
-                        Dictionary<string, Point> offsets = portraitOffsetReader.Parse(offsetFileName);
-                        data.Offsets = data.Offsets.Concat(offsets).GroupBy(d => d.Key).ToDictionary(d => d.Key, d => d.First().Value);
-                    }
-
-                    //TODO:  test and replace
-                    //var offsetFileNames = Directory.EnumerateFiles(PortraitOffsetsDirectory, "*.txt");
-                    //foreach (string offsetFileName in offsetFileNames)
-                    //{
-                    //    var offsets = portraitOffsetReader.Parse(offsetFileName);
-                    //    var allOffsets = data.Offsets.Concat(offsets).ToLookup(d => d.Key, d => d.Value);
-                    //    data.Offsets = allOffsets.ToDictionary(d => d.Key, d => d.First());
-                    //}
+                    data.Offsets = Directory.EnumerateFiles(PortraitOffsetsDirectory, "*.txt")
+                        .SelectMany(portraitOffsetReader.Parse)
+                        .Concat(data.Offsets)
+                        .ToLookup(d => d.Key, d => d.Value)
+                        .ToDictionary(d => d.Key, d => d.First());
                 }
             }
             catch (Exception e)
