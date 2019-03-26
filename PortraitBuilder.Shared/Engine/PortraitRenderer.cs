@@ -20,7 +20,7 @@ namespace PortraitBuilder.Engine
 
         private static readonly ILog logger = LogManager.GetLogger(typeof(PortraitRenderer));
 
-        internal static IReadOnlyDictionary<GovernmentType, string> GovernmentSpriteSuffix { get; } = new Dictionary<GovernmentType, string>
+        private static IReadOnlyDictionary<GovernmentType, string> GovernmentSpriteSuffix { get; } = new Dictionary<GovernmentType, string>
         {
             { GovernmentType.Feudal, "" },
             { GovernmentType.Iqta, "_iqta"},
