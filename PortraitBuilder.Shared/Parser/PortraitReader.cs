@@ -25,6 +25,19 @@ namespace PortraitBuilder.Parser
         /// </summary>
         private PortraitOffsetReader portraitOffsetReader = new PortraitOffsetReader();
 
+        public string BaseDir { get; }
+
+        public string InterfaceDirectory => System.IO.Path.Combine(BaseDir, "interface");
+
+        public string PortraitsDirectory => System.IO.Path.Combine(InterfaceDirectory, "portraits");
+
+        public string PortraitOffsetsDirectory => System.IO.Path.Combine(InterfaceDirectory, "portrait_offsets");
+
+        public PortraitReader(string dir)
+        {
+            this.BaseDir = dir;
+        }
+
         /// <summary>
         /// Parse Portrait data.
         /// 
@@ -32,31 +45,32 @@ namespace PortraitBuilder.Parser
         /// </summary>
         /// <param name="dir">The content root directory to parse from</param>
         /// <returns></returns>
-        public PortraitData Parse(string dir)
+        public PortraitData Parse()
         {
-            PortraitData data = new PortraitData();
+            var data = new PortraitData();
             try
             {
-                List<string> fileNames = new List<string>();
-                logger.Debug("Scanning for portrait data files in " + dir);
-                logger.Debug("Directories: " + Directory.GetDirectories(dir));
+                var fileNames = Enumerable.Empty<string>();
+                logger.Debug("Scanning for portrait data files in " + BaseDir);
+                logger.Debug("Directories: " + Directory.GetDirectories(BaseDir));
 
-                if (Directory.Exists(Path.Combine(dir, "interface")))
+                if (Directory.Exists(InterfaceDirectory))
                 {
-                    fileNames.AddRange(Directory.GetFiles(Path.Combine(dir, "interface"), "*.gfx"));
+                    fileNames = fileNames.Concat(Directory.EnumerateFiles(InterfaceDirectory, "*.gfx"));
                 }
                 else
                 {
-                    logger.Debug("Folder not found: " + Path.Combine(dir, "interface"));
+                    logger.Debug("Folder not found: " + System.IO.Path.Combine(BaseDir, "interface"));
                 }
+
                 // interface/portraits seems to be loaded after interface/, and override (cf byzantinegfx)
-                if (Directory.Exists(Path.Combine(dir, "interface", "portraits")))
+                if (Directory.Exists(PortraitsDirectory))
                 {
-                    fileNames.AddRange(Directory.GetFiles(Path.Combine(dir, "interface", "portraits"), "*.gfx"));
+                    fileNames = fileNames.Concat(Directory.EnumerateFiles(PortraitsDirectory, "*.gfx"));
                 }
                 else
                 {
-                    logger.Debug("Folder not found: " + Path.Combine(dir, "interface", "portraits"));
+                    logger.Debug("Folder not found: " + System.IO.Path.Combine(BaseDir, "interface", "portraits"));
                 }
 
                 foreach (string fileName in fileNames)
@@ -64,23 +78,41 @@ namespace PortraitBuilder.Parser
                     Parse(fileName, data);
                 }
 
-                if (Directory.Exists(Path.Combine(dir, "interface", "portrait_offsets")))
+                if (Directory.Exists(PortraitOffsetsDirectory))
                 {
-                    string[] offsetFileNames = Directory.GetFiles(Path.Combine(dir, "interface", "portrait_offsets"), "*.txt");
+                    var offsetFileNames = Directory.EnumerateFiles(PortraitOffsetsDirectory, "*.txt");
                     foreach (string offsetFileName in offsetFileNames)
                     {
                         Dictionary<string, Point> offsets = portraitOffsetReader.Parse(offsetFileName);
                         data.Offsets = data.Offsets.Concat(offsets).GroupBy(d => d.Key).ToDictionary(d => d.Key, d => d.First().Value);
                     }
+
+                    //TODO:  test and replace
+                    //var offsetFileNames = Directory.EnumerateFiles(PortraitOffsetsDirectory, "*.txt");
+                    //foreach (string offsetFileName in offsetFileNames)
+                    //{
+                    //    var offsets = portraitOffsetReader.Parse(offsetFileName);
+                    //    var allOffsets = data.Offsets.Concat(offsets).ToLookup(d => d.Key, d => d.Value);
+                    //    data.Offsets = allOffsets.ToDictionary(d => d.Key, d => d.First());
+                    //}
                 }
             }
             catch (Exception e)
             {
-                logger.Error("Failed to parse portrait data in " + dir, e);
+                logger.Error("Failed to parse portrait data in " + BaseDir, e);
             }
 
             return data;
         }
+
+        private static HashSet<string> BadFiles { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "DefaultDialog.gfx",
+            "EU3_mapitems.gfx",
+            "chatfonts.gfx",
+            "fonts.gfx",
+            "mapitems.gfx"
+        };
 
         /// <summary>
         /// Parses a given portrait.gfx file.
@@ -88,50 +120,45 @@ namespace PortraitBuilder.Parser
         /// <param name="filename">Path of the file to parse.</param>
         private void Parse(string filename, PortraitData data)
         {
-            if (!File.Exists(filename))
+            var fi = new FileInfo(filename);
+            if (!fi.Exists)
             {
-                logger.Error(string.Format("File not found: {0}", filename));
-                return;
-            }
-            // Exclude vanilla files with known errors
-            if (filename.EndsWith("DefaultDialog.gfx") || filename.EndsWith("EU3_mapitems.gfx") || filename.EndsWith("chatfonts.gfx")
-                || filename.EndsWith("fonts.gfx") || filename.EndsWith("mapitems.gfx"))
-            {
-                logger.Info(string.Format("Skipping parsing of file: {0}", filename));
+                logger.Error($"File not found: {filename}");
                 return;
             }
 
-            StreamReader stream = new StreamReader(filename, WesternEncoding);
-            string fileContent = stream.ReadToEnd();
-            stream.Dispose();
+            // Exclude vanilla files with known errors
+            if (BadFiles.Contains(fi.Name))
+            {
+                logger.Info($"Skipping parsing of file: {filename}");
+                return;
+            }
 
             //Check the file isn't empty
-            string[] lines = fileContent.Split(fileContent.Contains('\r') ? '\r' : '\n');
-            bool isEmpty = true;
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (!lines[i].Trim().StartsWith("#") && !String.IsNullOrEmpty(lines[i].Trim()))
-                {
-                    isEmpty = false;
-                    break;
-                }
-            }
+            var hasContent = File.ReadLines(filename, WesternEncoding)
+                .Select(l => l.Trim())
+                .Any(l => !l.StartsWith("#"));
 
-            if (isEmpty)
+            if (!hasContent)
             {
-                logger.Warn("File is empty: " + filename);
+                logger.Warn($"File is empty: {filename}");
                 return;
             }
 
-            //Parse the file
-            PortraitReaderLexer lexer = new PortraitReaderLexer(fileContent);
-            PortraitReaderParser parser = new PortraitReaderParser(lexer);
+            ParseResult result;
+            using (var fs = File.OpenRead(filename))
+            using (var fileReader = new StreamReader(fs, WesternEncoding))
+            {
+                //Parse the file
+                PortraitReaderLexer lexer = new PortraitReaderLexer(fileReader);
+                PortraitReaderParser parser = new PortraitReaderParser(lexer);
 
-            ParseResult result = parser.Parse();
+                result = parser.Parse();
+            }
 
             if (!result.IsSuccess)
             {
-                logger.Error(String.Format("Lexical error in file {0}, line {1}", (new FileInfo(filename).Name), string.Concat(result.Errors)));
+                logger.Error($"Lexical error in file {fi.Name}, line {result.Errors}");
                 return;
             }
 
