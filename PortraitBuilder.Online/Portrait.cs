@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using PortraitBuilder.Model.Portrait;
 using PortraitBuilder.Engine;
 using PortraitBuilder.Model;
+using SkiaSharp;
 
 namespace PortraitBuilder.Online
 {
@@ -42,13 +43,52 @@ namespace PortraitBuilder.Online
                 DlcDir = "dlc/"
             };
             var loader = new Loader(user);
+            loader.LoadVanilla();
+            loader.LoadPortraits();
+            if (loader.ActivePortraitData.PortraitTypes.Count == 0)
+            {
+                //logger.Fatal("No portrait types found.");
+                //return;
+            }
+            var selectedPortraitType = "andalusiangfx_male";
+            portrait.PortraitType = loader.GetPortraitType($"PORTRAIT_{selectedPortraitType}");
+
             var bmp = portraitRenderer.DrawPortrait(portrait, loader.ActiveContents, loader.ActivePortraitData.Sprites);
+            var png = SKImage.FromBitmap(bmp).Encode();
 
             //string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             //dynamic data = JsonConvert.DeserializeObject(requestBody);
             //name = name ?? data?.name;
 
-            return new OkObjectResult(bmp);
+            return new FileStreamResult(png.AsStream(), "image/png");
+        }
+
+        private static void load(Loader loader)
+        {
+            //loader.LoadVanilla();
+            //loadDLCs(clean);
+            //loadMods();
+
+            //loadPortraitTypes();
+            //fillCharacteristicComboBoxes();
+            //randomizeCharacteristics(true);
+
+            //drawPortrait();
+        }
+
+        private static void loadPortraitTypes()
+        {
+            //cbCulturePortraitTypes.Items.Add(""); // Empty = no override
+            //foreach (KeyValuePair<string, PortraitType> pair in loader.ActivePortraitData.PortraitTypes)
+            //{
+            //    PortraitType portraitType = pair.Value;
+            //    String portraitName = portraitType.Name.Replace("PORTRAIT_", "");
+            //    if (portraitType.IsBasePortraitType())
+            //    {
+            //        cbPortraitTypes.Items.Add(portraitName);
+            //    }
+            //    cbCulturePortraitTypes.Items.Add(portraitName);
+            //}
         }
     }
 }
