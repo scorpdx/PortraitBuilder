@@ -36,11 +36,6 @@ namespace PortraitBuilder.Engine
         private DLCReader dlcReader = new DLCReader();
 
         /// <summary>
-        /// Stateless portraits.gfx file scanner
-        /// </summary>
-        private PortraitReader portraitReader = new PortraitReader();
-
-        /// <summary>
         /// DLCs or Mods that are checked
         /// </summary>
         public List<Content> ActiveContents { get; } = new List<Content>();
@@ -75,7 +70,8 @@ namespace PortraitBuilder.Engine
             vanilla.AbsolutePath = user.GameDir;
 
             logger.Info("Loading portraits from vanilla.");
-            vanilla.PortraitData = portraitReader.Parse(user.GameDir);
+            var reader = new PortraitReader(user.GameDir);
+            vanilla.PortraitData = reader.Parse();
 
             // Init
             ActivePortraitData = vanilla.PortraitData;
@@ -103,7 +99,8 @@ namespace PortraitBuilder.Engine
             foreach (DLC dlc in dlcs)
             {
                 logger.Info("Loading portraits from DLC: " + dlc.Name);
-                dlc.PortraitData = portraitReader.Parse(dlc.AbsolutePath);
+                var reader = new PortraitReader(dlc.AbsolutePath);
+                dlc.PortraitData = reader.Parse();
             }
             return dlcs;
         }
@@ -145,7 +142,9 @@ namespace PortraitBuilder.Engine
                     if (Directory.Exists(mod.AbsolutePath))
                     {
                         logger.Info("Loading portraits from mod: " + mod.Name);
-                        mod.PortraitData = portraitReader.Parse(mod.AbsolutePath);
+                        var reader = new PortraitReader(mod.AbsolutePath);
+                        mod.PortraitData = reader.Parse();
+
                         if (!mod.HasPortraitData)
                         {
                             mod.Enabled = false;
@@ -207,7 +206,9 @@ namespace PortraitBuilder.Engine
         {
             logger.Info("Refreshing content: " + content.Name);
             content.Unload();
-            content.PortraitData = portraitReader.Parse(content.AbsolutePath);
+
+            var reader = new PortraitReader(content.AbsolutePath);
+            content.PortraitData = reader.Parse();
 
             LoadPortraits();
         }
