@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
@@ -12,8 +11,8 @@ using PortraitBuilder.Model.Portrait;
 using PortraitBuilder.Model;
 using PortraitBuilder.Shared.Model;
 using System.Linq;
-using SkiaSharp.Views.Desktop;
 using SkiaSharp;
+using System.Runtime.InteropServices;
 
 namespace PortraitBuilder.UI
 {
@@ -273,24 +272,21 @@ namespace PortraitBuilder.UI
 
         private string getDefaultUserDir()
         {
-            string userDir = null;
-            switch (OSUtils.determineOS())
+            var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return Path.Combine(myDocuments, "Paradox Interactive", "Crusader Kings II");
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                // "Environment.SpecialFolder.MyDocuments does not add /Documents/ on Mac"
+                // JZ: verify if this is true in corefx
+                return Path.Combine(myDocuments, "Documents", "Paradox Interactive", "Crusader Kings II");
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return Path.Combine(myDocuments, ".paradoxinteractive", "Crusader Kings II");
+            else
             {
-                case OS.Windows:
-                    userDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Paradox Interactive", "Crusader Kings II");
-                    break;
-                case OS.Mac:
-                    // Environment.SpecialFolder.MyDocuments does not add /Documents/ on Mac
-                    userDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Documents", "Paradox Interactive", "Crusader Kings II");
-                    break;
-                case OS.Linux:
-                    userDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), ".paradoxinteractive", "Crusader Kings II");
-                    break;
-                case OS.Other:
-                    logger.Error("Unkown operating system, cannot lookup mods mods, platformID:  " + System.Environment.OSVersion.Platform);
-                    break;
+                logger.Error($"Unknown operating system, cannot lookup user dir. OS: {RuntimeInformation.OSDescription}");
+                return null;
             }
-            return userDir;
         }
 
         /// <summary>
