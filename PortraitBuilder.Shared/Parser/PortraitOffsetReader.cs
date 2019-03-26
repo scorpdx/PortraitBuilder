@@ -9,12 +9,13 @@ using System.Drawing;
 
 namespace PortraitBuilder.Parser {
 
-	/// <summary>
-	/// Handles the parsing of portrait_offsets.txt files.
-	/// </summary>
-	public class PortraitOffsetReader {
+    using static EncodingHelper;
+    /// <summary>
+    /// Handles the parsing of portrait_offsets.txt files.
+    /// </summary>
+    public class PortraitOffsetReader {
 
-		private static readonly ILog logger = LogManager.GetLogger(typeof(PortraitOffsetReader).Name);
+		private static readonly ILog logger = LogManager.GetLogger(typeof(PortraitOffsetReader));
 
 		/// <summary>
 		/// Parse offset files
@@ -30,7 +31,7 @@ namespace PortraitBuilder.Parser {
 			Dictionary<string, Point> offsets = new Dictionary<string, Point>();
 
 			string line;
-			using (StreamReader reader = new StreamReader(filename, Encoding.GetEncoding(1252))) {
+			using (StreamReader reader = new StreamReader(filename, WesternEncoding)) {
 				while ((line = reader.ReadLine()) != null) {
 					if (line.StartsWith("#"))
 						continue;

@@ -6,9 +6,10 @@ using log4net;
 using PortraitBuilder.Model.Content;
 
 namespace PortraitBuilder.Parser {
+    using static EncodingHelper;
 	public class DLCReader {
 
-		private static readonly ILog logger = LogManager.GetLogger(typeof(DLC).Name);
+		private static readonly ILog logger = LogManager.GetLogger(typeof(DLC));
 
 		public List<DLC> ParseFolder(string folder) {
 			List<DLC> dlcs = new List<DLC>();
@@ -47,7 +48,7 @@ namespace PortraitBuilder.Parser {
 			DLC dlc = new DLC();
 			dlc.DLCFile = dlcFile.Name;
 
-			StreamReader reader = new StreamReader(filename, Encoding.GetEncoding(1252));
+			StreamReader reader = new StreamReader(filename, WesternEncoding);
 			while ((line = reader.ReadLine()) != null) {
 				if (line.StartsWith("#"))
 					continue;
