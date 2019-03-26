@@ -175,47 +175,37 @@ namespace PortraitBuilder.Parser
 
         private void ParsePortraits(ASTNode node, string filename, PortraitData data)
         {
-            IEnumerable<ASTNode> children = node.Children.Where(child => child.Symbol.Name == "groupOption");
-            String id;
-
+            var children = node.Children.Where(child => child.Symbol.Name == "groupOption");
             foreach (ASTNode child in children)
             {
-                id = child.Children[0].Value;
-
-                if (id == "spriteType")
+                var id = child.Children[0].Value;
+                try
                 {
-                    try
+                    switch (id)
                     {
-                        Sprite sprite = ParseSpriteType(child, filename);
-                        if (data.Sprites.ContainsKey(sprite.Name))
-                        {
-                            logger.Debug("Sprite already exists. Replacing.");
-                            data.Sprites.Remove(sprite.Name);
-                        }
-                        data.Sprites.Add(sprite.Name, sprite);
-                    }
-                    catch (Exception e)
-                    {
-                        logger.Error(string.Format("Could not parse spriteType in file {0}", filename), e);
+                        case "spriteType":
+                            var sprite = ParseSpriteType(child, filename);
+                            if (data.Sprites.ContainsKey(sprite.Name))
+                            {
+                                logger.Debug($"Sprite {sprite.Name} already exists. Replacing.");
+                                data.Sprites.Remove(sprite.Name);
+                            }
+                            data.Sprites.Add(sprite.Name, sprite);
+                            break;
+                        case "portraitType":
+                            var portraitType = ParsePortraitType(child, filename);
+                            if (data.PortraitTypes.ContainsKey(portraitType.Name))
+                            {
+                                logger.Debug($"Portrait type {portraitType.Name} already exists. Replacing.");
+                                data.PortraitTypes.Remove(portraitType.Name);
+                            }
+                            data.PortraitTypes.Add(portraitType.Name, portraitType);
+                            break;
                     }
                 }
-                else if (id == "portraitType")
+                catch (Exception e)
                 {
-                    try
-                    {
-                        PortraitType portraitType = ParsePortraitType(child, filename);
-                        if (data.PortraitTypes.ContainsKey(portraitType.Name))
-                        {
-                            logger.Debug("Portrait type " + portraitType.Name + "exists. Replacing.");
-                            data.PortraitTypes.Remove(portraitType.Name);
-                        }
-                        data.PortraitTypes.Add(portraitType.Name, portraitType);
-
-                    }
-                    catch (Exception e)
-                    {
-                        logger.Error(string.Format("Could not parse portraitType in file {0}", filename), e);
-                    }
+                    logger.Error($"Could not parse {id} in file {filename}", e);
                 }
             }
         }
