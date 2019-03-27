@@ -127,7 +127,7 @@ namespace PortraitBuilder.Engine
                     {
                         LoadSprite(sprite, activeContents);
                     }
-                    canvas.DrawBitmap(sprite.Tiles[character.Rank], SKPoint.Empty);
+                    canvas.DrawBitmap(sprite.Tiles[(int)character.Rank], SKPoint.Empty);
                 }
             }
             catch (Exception e)

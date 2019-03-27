@@ -8,8 +8,6 @@ namespace PortraitBuilder.Model.Portrait
     /// </summary>
     public class Character
     {
-        public static char[] Alphabet { get; } = "abcdefghijklmnopqrstuvwxyz".ToCharArray();
-
         public string DNA { get; private set; } = "aaaaa0aaaa0";
 
         public string Properties { get; private set; } = "aa0aaaaaaaa000";
@@ -19,7 +17,7 @@ namespace PortraitBuilder.Model.Portrait
         /// <summary>
         /// Index of rank in border sprite
         /// </summary>
-        public int Rank { get; set; }
+        public TitleRank Rank { get; set; }
 
         /// <summary>
         /// Index of government in PortraitRenderer#governmentSpriteSuffix.
@@ -124,5 +122,7 @@ namespace PortraitBuilder.Model.Portrait
         /// Note: in some cases total maximulm 27 (blgrabs mod)
         /// </summary>
         public static char GetLetter(int index) => index == -1 || index == 0 ? '0' : Alphabet[index - 1];
+
+        private static char[] Alphabet { get; } = "abcdefghijklmnopqrstuvwxyz".ToCharArray();
     }
 }
