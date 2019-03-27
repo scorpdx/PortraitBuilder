@@ -61,29 +61,35 @@ namespace PortraitBuilder.Model.Portrait
             this.Properties = properties;
         }
 
-        public char GetLetter(Characteristic characteristic)
+        public bool TryGetLetter(Characteristic characteristic, out char letter)
         {
             if (characteristic == Characteristic.HAIR_COLOR)
             {
-                return DNA[PortraitType.HairColourIndex];
+                letter = DNA[PortraitType.HairColourIndex];
             }
             else if (characteristic == Characteristic.EYE_COLOR)
             {
-                return DNA[PortraitType.EyeColourIndex];
+                letter = DNA[PortraitType.EyeColourIndex];
             }
             else if (characteristic.type == Characteristic.Type.DNA)
             {
-                return DNA[characteristic.index];
+                letter = DNA[characteristic.index];
+            }
+            else if (characteristic.index < Properties.Length)
+            {
+                letter = Properties[characteristic.index];
             }
             else
             {
-                return Properties[characteristic.index];
+                letter = default;
+                return false;
             }
+
+            return true;
         }
 
 
-        public override string ToString()
-            => $"DNA: {DNA}, Properties: {Properties}";
+        public override string ToString() => $"DNA: {DNA}, Properties: {Properties}";
 
         /// <summary>
         /// Converts a letter to an index
@@ -117,7 +123,6 @@ namespace PortraitBuilder.Model.Portrait
         /// 
         /// Note: in some cases total maximulm 27 (blgrabs mod)
         /// </summary>
-        public static char GetLetter(int index)
-            => index == -1 || index == 0 ? '0' : Alphabet[index - 1];
+        public static char GetLetter(int index) => index == -1 || index == 0 ? '0' : Alphabet[index - 1];
     }
 }
