@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <PackageReference Include="Hime.Redist" Version="3.4.0" />
-    <PackageReference Include="SharpZipLib" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>

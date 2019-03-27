@@ -6,8 +6,9 @@ using PortraitBuilder.Model;
 using PortraitBuilder.Parser;
 using PortraitBuilder.Model.Content;
 using PortraitBuilder.Model.Portrait;
-using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
+using System.IO.Compression;
+using System.Text.RegularExpressions;
 
 namespace PortraitBuilder.Engine
 {
@@ -105,13 +106,17 @@ namespace PortraitBuilder.Engine
             return dlcs;
         }
 
+        private static Regex[] DlcEntryFilters { get; } = "interface;gfx/characters"
+            .Split(';')
+            .Select(f => new Regex(f, RegexOptions.IgnoreCase))
+            .ToArray();
+
         /// <summary>
         /// Unzip DLC, only if tmp folder doesn't already exist
         /// </summary>
         /// <param name="dlcs"></param>
         private void UnzipDLCs(List<DLC> dlcs)
         {
-            FastZip fastZip = new FastZip();
             foreach (DLC dlc in dlcs)
             {
                 string dlcCode = dlc.DLCFile.Replace(".dlc", "");
@@ -120,8 +125,20 @@ namespace PortraitBuilder.Engine
                 {
                     logger.LogInformation(string.Format("Extracting {0} to {1}", dlc.Name, newDlcAbsolutePath));
                     // Filter only portraits files, to gain speed/space
-                    string fileFilter = @"interface;gfx/characters";
-                    fastZip.ExtractZip(dlc.AbsolutePath, newDlcAbsolutePath, fileFilter);
+                    using (var zip = ZipFile.OpenRead(dlc.AbsolutePath))
+                    {
+                        var filteredEntries = zip.Entries
+                            .Where(e => e.Length > 0)
+                            .Where(e => DlcEntryFilters.Any(r => r.IsMatch(e.FullName)));
+                        foreach (var entry in filteredEntries)
+                        {
+                            var fi = new FileInfo(Path.Combine(newDlcAbsolutePath, entry.FullName));
+                            fi.Directory.CreateSubdirectory(".");
+
+                            entry.ExtractToFile(fi.FullName);
+                        }
+                    }
+                    //ZipFile.ExtractToDirectory(dlc.AbsolutePath, newDlcAbsolutePath, fileFilter);
 
                     // In any case, create the directory, so that it is ignored for next load.
                     Directory.CreateDirectory(newDlcAbsolutePath);
