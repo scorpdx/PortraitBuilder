@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PortraitBuilder.Parser\PortraitBuilder.Parser.csproj" />
     <ProjectReference Include="..\PortraitBuilder.Shared\PortraitBuilder.Shared.csproj" />
   </ItemGroup>
 

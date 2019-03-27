@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{A6F5A99D-E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortraitBuilder.Tests", "test\PortraitBuilder.Tests\PortraitBuilder.Tests.csproj", "{D707B243-E5C6-4291-A8B4-DDDE64E038D6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortraitBuilder.Parser", "src\PortraitBuilder.Parser\PortraitBuilder.Parser.csproj", "{0CAB519F-FCF5-4ADF-9917-105439E809C9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,18 @@ Global
 		{D707B243-E5C6-4291-A8B4-DDDE64E038D6}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{D707B243-E5C6-4291-A8B4-DDDE64E038D6}.Release|x86.ActiveCfg = Release|Any CPU
 		{D707B243-E5C6-4291-A8B4-DDDE64E038D6}.Release|x86.Build.0 = Release|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Debug|x86.Build.0 = Debug|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Release|x86.ActiveCfg = Release|Any CPU
+		{0CAB519F-FCF5-4ADF-9917-105439E809C9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -10,16 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Parser\PortraitReaderLexer.bin" />
-    <None Remove="Parser\PortraitReaderParser.bin" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Parser\PortraitReaderLexer.bin" />
-    <EmbeddedResource Include="Parser\PortraitReaderParser.bin" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Hime.Redist" Version="3.4.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.2.0" />
     <PackageReference Include="Pfim" Version="0.5.2" />

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>PortraitBuilder</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Parser\PortraitReaderLexer.bin" />
+    <None Remove="Parser\PortraitReaderParser.bin" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Parser\PortraitReaderLexer.bin" />
+    <EmbeddedResource Include="Parser\PortraitReaderParser.bin" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PortraitBuilder.Shared\PortraitBuilder.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
