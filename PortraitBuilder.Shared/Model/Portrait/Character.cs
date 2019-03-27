@@ -1,5 +1,4 @@
-﻿using PortraitBuilder.Shared.Model;
-using System;
+﻿using System;
 
 namespace PortraitBuilder.Model.Portrait
 {

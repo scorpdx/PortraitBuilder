@@ -4,14 +4,13 @@ using System.IO;
 using log4net;
 using PortraitBuilder.Model.Portrait;
 using PortraitBuilder.Model.Content;
-using PortraitBuilder.Shared.Model;
 using SkiaSharp;
-using static PortraitBuilder.Model.Portrait.ColorHelper;
 using System.Diagnostics;
+using PortraitBuilder.Model;
 
 namespace PortraitBuilder.Engine
 {
-
+    using static ColorHelper;
     /// <summary>
     /// Handles the rendering of portraits
     /// </summary>

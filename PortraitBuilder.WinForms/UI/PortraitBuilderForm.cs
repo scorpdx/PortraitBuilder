@@ -9,7 +9,6 @@ using PortraitBuilder.Engine;
 using PortraitBuilder.Model.Content;
 using PortraitBuilder.Model.Portrait;
 using PortraitBuilder.Model;
-using PortraitBuilder.Shared.Model;
 using System.Linq;
 using SkiaSharp;
 using System.Runtime.InteropServices;

@@ -1,4 +1,4 @@
-﻿namespace PortraitBuilder.Shared.Model
+﻿namespace PortraitBuilder.Model
 {
     public enum GovernmentType
     {
