@@ -606,7 +606,7 @@ namespace PortraitBuilder.UI
             started = false;
             updateActiveAdditionalContent();
             loadPortraitTypes();
-            refreshCustomCharacectiristics();
+            refreshCustomCharacteristics();
 
             fillCharacteristicComboBoxes();
             // TODO No refresh of DNA/Properties needed (if ComboBox has less options ?)
@@ -624,7 +624,7 @@ namespace PortraitBuilder.UI
             drawPortrait();
         }
 
-        private void refreshCustomCharacectiristics()
+        private void refreshCustomCharacteristics()
         {
             unregisterCustomProperties();
             foreach (Characteristic characteristic in getSelectedPortraitType().CustomCharacteristics)
@@ -726,7 +726,7 @@ namespace PortraitBuilder.UI
                 PortraitType selectedPortraitType = getSelectedPortraitType();
                 character.PortraitType = selectedPortraitType;
 
-                refreshCustomCharacectiristics();
+                refreshCustomCharacteristics();
 
                 fillCharacteristicComboBoxes();
                 updateSelectedCharacteristicValues(character);
