@@ -56,39 +56,7 @@ namespace PortraitBuilder.Online
             var bmp = portraitRenderer.DrawCharacter(character, loader.ActiveContents, loader.ActivePortraitData.Sprites);
             var png = SKImage.FromBitmap(bmp).Encode();
 
-            //string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            //dynamic data = JsonConvert.DeserializeObject(requestBody);
-            //name = name ?? data?.name;
-
             return new FileStreamResult(png.AsStream(), "image/png");
-        }
-
-        private static void load(Loader loader)
-        {
-            //loader.LoadVanilla();
-            //loadDLCs(clean);
-            //loadMods();
-
-            //loadPortraitTypes();
-            //fillCharacteristicComboBoxes();
-            //randomizeCharacteristics(true);
-
-            //drawPortrait();
-        }
-
-        private static void loadPortraitTypes()
-        {
-            //cbCulturePortraitTypes.Items.Add(""); // Empty = no override
-            //foreach (KeyValuePair<string, PortraitType> pair in loader.ActivePortraitData.PortraitTypes)
-            //{
-            //    PortraitType portraitType = pair.Value;
-            //    String portraitName = portraitType.Name.Replace("PORTRAIT_", "");
-            //    if (portraitType.IsBasePortraitType())
-            //    {
-            //        cbPortraitTypes.Items.Add(portraitName);
-            //    }
-            //    cbCulturePortraitTypes.Items.Add(portraitName);
-            //}
         }
     }
 }
