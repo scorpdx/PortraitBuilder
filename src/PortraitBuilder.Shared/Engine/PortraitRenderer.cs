@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using log4net;
 using PortraitBuilder.Model.Portrait;
 using PortraitBuilder.Model.Content;
 using SkiaSharp;
 using System.Diagnostics;
 using PortraitBuilder.Model;
+using Microsoft.Extensions.Logging;
 
 namespace PortraitBuilder.Engine
 {
@@ -17,7 +17,7 @@ namespace PortraitBuilder.Engine
     public class PortraitRenderer
     {
 
-        private static readonly ILog logger = LogManager.GetLogger(typeof(PortraitRenderer));
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<PortraitRenderer>();
 
         private static IReadOnlyDictionary<GovernmentType, string> GovernmentSpriteSuffix { get; } = new Dictionary<GovernmentType, string>
         {
@@ -42,7 +42,7 @@ namespace PortraitBuilder.Engine
         /// <returns>Frameless portrait drawn with the given parameters.</returns>
         public SKBitmap DrawCharacter(Character character, List<Content> activeContents, Dictionary<string, Sprite> sprites)
         {
-            logger.Info($"Drawing Portrait {character}");
+            logger.LogInformation($"Drawing Portrait {character}");
 
             var portraitInfo = new SKImageInfo(176, 176);
             var portraitImage = new SKBitmap(portraitInfo);
@@ -63,7 +63,7 @@ namespace PortraitBuilder.Engine
 
         private void DrawLayer(Layer layer, SKCanvas canvas, Character character, List<Content> activeContents, Dictionary<string, Sprite> sprites)
         {
-            logger.Debug($"Drawing Layer : {layer}");
+            logger.LogDebug($"Drawing Layer : {layer}");
 
             string spriteName = GetOverriddenSpriteName(character, layer);
 
@@ -97,7 +97,7 @@ namespace PortraitBuilder.Engine
             }
             catch (Exception e)
             {
-                logger.Error($"Could not render layer {layer}", e);
+                logger.LogError($"Could not render layer {layer}", e);
             }
         }
 
@@ -130,7 +130,7 @@ namespace PortraitBuilder.Engine
 
         private void DrawBorder(Character character, SKCanvas canvas, List<Content> activeContents, Dictionary<string, Sprite> sprites)
         {
-            logger.Debug("Drawing border.");
+            logger.LogDebug("Drawing border.");
             try
             {
                 string governmentSpriteName = "GFX_charframe_150" + GovernmentSpriteSuffix[character.Government];
@@ -148,7 +148,7 @@ namespace PortraitBuilder.Engine
             }
             catch (Exception e)
             {
-                logger.Error("Could not render borders ", e);
+                logger.LogError("Could not render borders ", e);
             }
         }
 
@@ -156,7 +156,7 @@ namespace PortraitBuilder.Engine
         {
             char letter = character.GetLetter(layer.Characteristic);
             int tileIndex = Character.GetIndex(letter, frameCount);
-            logger.Debug($"Layer letter: {letter}, Tile Index: {tileIndex}");
+            logger.LogDebug($"Layer letter: {letter}, Tile Index: {tileIndex}");
             return tileIndex;
         }
 
@@ -190,7 +190,7 @@ namespace PortraitBuilder.Engine
 
             if (path != null)
             {
-                logger.Debug("Loading sprite from: " + path);
+                logger.LogDebug("Loading sprite from: " + path);
                 sprite.Load(path);
             }
             else

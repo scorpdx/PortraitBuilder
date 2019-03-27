@@ -47,7 +47,7 @@ namespace PortraitBuilder.Online
             loader.LoadPortraits();
             if (loader.ActivePortraitData.PortraitTypes.Count == 0)
             {
-                //logger.Fatal("No portrait types found.");
+                //logger.LogCritical("No portrait types found.");
                 //return;
             }
             var selectedPortraitType = "andalusiangfx_male";

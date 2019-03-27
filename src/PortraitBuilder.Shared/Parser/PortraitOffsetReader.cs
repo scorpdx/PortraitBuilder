@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using log4net;
 using System.IO;
 using System.Drawing;
+using Microsoft.Extensions.Logging;
 
 namespace PortraitBuilder.Parser
 {
@@ -13,7 +13,7 @@ namespace PortraitBuilder.Parser
     public class PortraitOffsetReader
     {
 
-        private static readonly ILog logger = LogManager.GetLogger(typeof(PortraitOffsetReader));
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<PortraitOffsetReader>();
 
         /// <summary>
         /// Parse offset files
@@ -24,7 +24,7 @@ namespace PortraitBuilder.Parser
         {
             if (!File.Exists(filename))
             {
-                logger.Error(string.Format("File not found: {0}", filename));
+                logger.LogError(string.Format("File not found: {0}", filename));
                 return null;
             }
 
@@ -58,7 +58,7 @@ namespace PortraitBuilder.Parser
                 {
                     if (offset != offsets[layerName])
                     {
-                        logger.Warn(string.Format("Duplicate offsets for {0}: {1} and {2} (ignored)", layerName, offsets[layerName], offset));
+                        logger.LogWarning("Duplicate offsets for {0}: {1} and {2} (ignored)", layerName, offsets[layerName], offset);
                     }
                 }
                 else
@@ -68,7 +68,7 @@ namespace PortraitBuilder.Parser
             }
             else
             {
-                logger.Error(string.Format("Syntax error in file {0} on line: {1} ", filename, line));
+                logger.LogError(string.Format("Syntax error in file {0} on line: {1} ", filename, line));
             }
         }
     }

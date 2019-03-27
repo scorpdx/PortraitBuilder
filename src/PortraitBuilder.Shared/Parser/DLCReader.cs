@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using log4net;
+using Microsoft.Extensions.Logging;
 using PortraitBuilder.Model.Content;
 
 namespace PortraitBuilder.Parser
@@ -10,7 +10,7 @@ namespace PortraitBuilder.Parser
     public class DLCReader
     {
 
-        private static readonly ILog logger = LogManager.GetLogger(typeof(DLC));
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<DLC>();
 
         public List<DLC> ParseFolder(string folder)
         {
@@ -22,7 +22,7 @@ namespace PortraitBuilder.Parser
                 FileInfo[] dlcFiles = dir.GetFiles("*.dlc");
                 if (dlcFiles.Length == 0)
                 {
-                    logger.Error(string.Format("No DLC files found in folder: {0}", dir.FullName));
+                    logger.LogError("No DLC files found in folder: {0}", dir.FullName);
                 }
 
                 foreach (FileInfo dlcFile in dlcFiles)
@@ -38,7 +38,7 @@ namespace PortraitBuilder.Parser
             }
             else
             {
-                logger.Error(string.Format("Folder not found: {0}", dir.FullName));
+                logger.LogError(string.Format("Folder not found: {0}", dir.FullName));
             }
             return dlcs;
         }
@@ -47,7 +47,7 @@ namespace PortraitBuilder.Parser
         {
             if (!File.Exists(filename))
             {
-                logger.Error(string.Format("File not found: {0}", filename));
+                logger.LogError(string.Format("File not found: {0}", filename));
                 return null;
             }
 
@@ -76,7 +76,7 @@ namespace PortraitBuilder.Parser
                     if (Int32.TryParse(line.Split('=')[1].Split('#')[0].Replace("\"", "").Trim(), out intOut))
                         dlc.SteamID = intOut;
                     else
-                        logger.Error(string.Format("Error parsing Steam ID in file: {0}", dlcFile.Name));
+                        logger.LogError(string.Format("Error parsing Steam ID in file: {0}", dlcFile.Name));
                 }
 
                 if (line.StartsWith("gamersgate_id"))
@@ -84,7 +84,7 @@ namespace PortraitBuilder.Parser
                     if (Int32.TryParse(line.Split('=')[1].Split('#')[0].Replace("\"", "").Trim(), out intOut))
                         dlc.GamersGateID = intOut;
                     else
-                        logger.Error(string.Format("Error parsing GamersGate ID in file: {0}", dlcFile.Name));
+                        logger.LogError(string.Format("Error parsing GamersGate ID in file: {0}", dlcFile.Name));
                 }
 
                 if (line.StartsWith("affects_checksum"))

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using log4net;
+using Microsoft.Extensions.Logging;
 
 namespace PortraitBuilder.Model.Portrait
 {
@@ -12,7 +12,7 @@ namespace PortraitBuilder.Model.Portrait
     public class PortraitData
     {
 
-        private static readonly ILog logger = LogManager.GetLogger(typeof(PortraitData));
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<PortraitData>();
 
         /// <summary>
         /// Dictionary of included sprites
@@ -39,7 +39,7 @@ namespace PortraitBuilder.Model.Portrait
         /// </summary>
         public void Dispose()
         {
-            logger.Info("Disposing of previous portrait data.");
+            logger.LogInformation("Disposing of previous portrait data.");
 
             Unload();
 
@@ -98,7 +98,7 @@ namespace PortraitBuilder.Model.Portrait
                         }
                         else
                         {
-                            logger.Error("Sprite not found for layer " + layer);
+                            logger.LogError("Sprite not found for layer " + layer);
                         }
                     }
                 }

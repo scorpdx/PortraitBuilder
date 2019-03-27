@@ -4,7 +4,6 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
-using log4net;
 using PortraitBuilder.Engine;
 using PortraitBuilder.Model.Content;
 using PortraitBuilder.Model.Portrait;
@@ -12,6 +11,7 @@ using PortraitBuilder.Model;
 using System.Linq;
 using SkiaSharp;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
 
 namespace PortraitBuilder.UI
 {
@@ -22,7 +22,7 @@ namespace PortraitBuilder.UI
     public partial class PortraitBuilderForm : Form
     {
 
-        private static readonly ILog logger = LogManager.GetLogger(typeof(PortraitBuilderForm));
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<PortraitBuilderForm>();
 
         private SKImage previewImage;
 
@@ -84,7 +84,7 @@ namespace PortraitBuilder.UI
 
         private void initializeForm()
         {
-            logger.Info("Portrait Builder Version " + Application.ProductVersion);
+            logger.LogInformation("Portrait Builder Version " + Application.ProductVersion);
             // Add the version to title
             this.Text += " " + Application.ProductVersion;
 
@@ -94,8 +94,8 @@ namespace PortraitBuilder.UI
             user.GameDir = readGameDir();
             user.ModDir = readModDir(user.GameDir);
             user.DlcDir = Path.Combine(Environment.CurrentDirectory, "dlc") + Path.DirectorySeparatorChar;
-            logger.Info("Configuration: " + user);
-            logger.Info("----------------------------");
+            logger.LogInformation("Configuration: " + user);
+            logger.LogInformation("----------------------------");
 
             loader = new Loader(user);
         }
@@ -125,8 +125,8 @@ namespace PortraitBuilder.UI
 
         private void load(bool clean)
         {
-            logger.Info("----------------------------");
-            logger.Info("(Re-)loading data");
+            logger.LogInformation("----------------------------");
+            logger.LogInformation("(Re-)loading data");
 
             loader.LoadVanilla();
             loadDLCs(clean);
@@ -247,7 +247,7 @@ namespace PortraitBuilder.UI
             Stream stream = new FileStream("gamedir.txt", FileMode.Open);
             StreamReader reader = new StreamReader(stream);
             String gameDir = reader.ReadToEnd();
-            logger.Info("Read gamedir: " + gameDir);
+            logger.LogInformation("Read gamedir: " + gameDir);
             return gameDir;
         }
 
@@ -260,11 +260,11 @@ namespace PortraitBuilder.UI
             string userdirFilePath = Path.Combine(gameDir, "userdir.txt");
             if (File.Exists(userdirFilePath))
             {
-                logger.Info("Reading userdir.txt to determine the mod directory.");
+                logger.LogInformation("Reading userdir.txt to determine the mod directory.");
                 Stream stream = new FileStream(userdirFilePath, FileMode.Open);
                 StreamReader reader = new StreamReader(stream, Encoding.Default);
                 userDir = reader.ReadLine() + Path.DirectorySeparatorChar;
-                logger.Info("Found userdir.txt with path: " + userDir);
+                logger.LogInformation("Found userdir.txt with path: " + userDir);
             }
             return Path.Combine(userDir, "mod");
         }
@@ -283,7 +283,7 @@ namespace PortraitBuilder.UI
                 return Path.Combine(myDocuments, ".paradoxinteractive", "Crusader Kings II");
             else
             {
-                logger.Error($"Unknown operating system, cannot lookup user dir. OS: {RuntimeInformation.OSDescription}");
+                logger.LogError($"Unknown operating system, cannot lookup user dir. OS: {RuntimeInformation.OSDescription}");
                 return null;
             }
         }
@@ -302,7 +302,7 @@ namespace PortraitBuilder.UI
             }
             catch (Exception e)
             {
-                logger.Error("Error encountered rendering portrait", e);
+                logger.LogError("Error encountered rendering portrait", e);
                 return;
             }
 
@@ -327,7 +327,7 @@ namespace PortraitBuilder.UI
         // Needs to be called each time portrait object is modified
         private void outputDNA()
         {
-            logger.Debug(" --Outputting DNA and Property strings.");
+            logger.LogDebug(" --Outputting DNA and Property strings.");
             StringBuilder dnaPropOutput = new StringBuilder();
 
             dnaPropOutput.Append("  dna=\"");
@@ -348,7 +348,7 @@ namespace PortraitBuilder.UI
         /// <param name="doRank"></param>
         private void randomizeCharacteristics(bool doRank)
         {
-            logger.Debug("Randomizing UI");
+            logger.LogDebug("Randomizing UI");
             if (doRank)
             {
                 randomizeComboBox(cbGovernment);
@@ -405,7 +405,7 @@ namespace PortraitBuilder.UI
             int frameCount = loader.ActivePortraitData.GetFrameCount(portraitType, characteristic);
             if (frameCount > 0)
             {
-                logger.Debug(string.Format("Item count for {0} {1} : {2}", portraitType, characteristic, frameCount));
+                logger.LogDebug("Item count for {0} {1} : {2}", portraitType, characteristic, frameCount);
                 cb.Enabled = true;
                 fillComboBox(cb, frameCount);
                 if (frameCount == 1)
@@ -415,7 +415,7 @@ namespace PortraitBuilder.UI
             }
             else
             {
-                logger.Warn(string.Format("Could not find frame count for {0} and {1}, disabling dropdown.", portraitType, characteristic));
+                logger.LogWarning(string.Format("Could not find frame count for {0} and {1}, disabling dropdown.", portraitType, characteristic));
                 cb.Enabled = false;
             }
         }
@@ -478,7 +478,7 @@ namespace PortraitBuilder.UI
 
             if (loader.ActivePortraitData.PortraitTypes.Count == 0)
             {
-                logger.Fatal("No portrait types found.");
+                logger.LogCritical("No portrait types found.");
                 return;
             }
 
@@ -784,7 +784,7 @@ namespace PortraitBuilder.UI
 
             if (content != null)
             {
-                logger.Info(string.Format("Content change for {0} in content {1}", path, content));
+                logger.LogInformation(string.Format("Content change for {0} in content {1}", path, content));
                 loader.RefreshContent(content);
                 loadPortraitTypes();
                 fillCharacteristicComboBoxes();
@@ -792,7 +792,7 @@ namespace PortraitBuilder.UI
             }
             else
             {
-                logger.Error(string.Format("No content matched for watcher on file {0}", path));
+                logger.LogError(string.Format("No content matched for watcher on file {0}", path));
             }
 
             watcher.EnableRaisingEvents = true;
@@ -800,7 +800,7 @@ namespace PortraitBuilder.UI
 
         private void onWatcherError(object sender, ErrorEventArgs e)
         {
-            logger.Error("FileSystemWatcher unable to continue", e.GetException());
+            logger.LogError("FileSystemWatcher unable to continue", e.GetException());
         }
     }
 }

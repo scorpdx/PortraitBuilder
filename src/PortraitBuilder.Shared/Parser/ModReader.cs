@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using log4net;
+using Microsoft.Extensions.Logging;
 using PortraitBuilder.Model.Content;
 
 namespace PortraitBuilder.Parser
@@ -10,7 +10,7 @@ namespace PortraitBuilder.Parser
     public class ModReader
     {
 
-        private static readonly ILog logger = LogManager.GetLogger(typeof(ModReader));
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<ModReader>();
 
         /// <summary>
         /// Loads all files in the given folder.
@@ -27,7 +27,7 @@ namespace PortraitBuilder.Parser
 
                 if (modFiles.Length == 0)
                 {
-                    logger.Warn(string.Format("No mods found in folder: {0}", dir.FullName));
+                    logger.LogWarning(string.Format("No mods found in folder: {0}", dir.FullName));
                 }
 
                 foreach (FileInfo modFile in modFiles)
@@ -43,13 +43,13 @@ namespace PortraitBuilder.Parser
                     }
                     catch (Exception e)
                     {
-                        logger.Error("Could not parse .mod file: " + modFile, e);
+                        logger.LogError("Could not parse .mod file: " + modFile, e);
                     }
                 }
             }
             else
             {
-                logger.Error(string.Format("Folder not found: {0}", dir.FullName));
+                logger.LogError(string.Format("Folder not found: {0}", dir.FullName));
             }
 
             return mods;
@@ -59,7 +59,7 @@ namespace PortraitBuilder.Parser
         {
             if (!File.Exists(filename))
             {
-                logger.Error(string.Format("File not found: {0}", filename));
+                logger.LogError(string.Format("File not found: {0}", filename));
                 return null;
             }
 

@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using log4net;
 using PortraitBuilder.Model;
 using PortraitBuilder.Parser;
 using PortraitBuilder.Model.Content;
 using PortraitBuilder.Model.Portrait;
 using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Extensions.Logging;
 
 namespace PortraitBuilder.Engine
 {
@@ -18,7 +18,7 @@ namespace PortraitBuilder.Engine
     public class Loader
     {
 
-        private static readonly ILog logger = LogManager.GetLogger(typeof(Loader));
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<Loader>();
 
         /// <summary>
         /// User configuration: game path, etc.
@@ -69,7 +69,7 @@ namespace PortraitBuilder.Engine
             vanilla.Name = "vanilla";
             vanilla.AbsolutePath = user.GameDir;
 
-            logger.Info("Loading portraits from vanilla.");
+            logger.LogInformation("Loading portraits from vanilla.");
             var reader = new PortraitReader(user.GameDir);
             vanilla.PortraitData = reader.Parse();
 
@@ -91,14 +91,14 @@ namespace PortraitBuilder.Engine
         public List<DLC> LoadDLCs()
         {
             string dlcFolder = Path.Combine(user.GameDir, "DLC");
-            logger.Info("Loading DLCs from " + dlcFolder);
+            logger.LogInformation("Loading DLCs from " + dlcFolder);
             List<DLC> dlcs = dlcReader.ParseFolder(dlcFolder);
 
             UnzipDLCs(dlcs);
 
             foreach (DLC dlc in dlcs)
             {
-                logger.Info("Loading portraits from DLC: " + dlc.Name);
+                logger.LogInformation("Loading portraits from DLC: " + dlc.Name);
                 var reader = new PortraitReader(dlc.AbsolutePath);
                 dlc.PortraitData = reader.Parse();
             }
@@ -118,7 +118,7 @@ namespace PortraitBuilder.Engine
                 string newDlcAbsolutePath = Path.Combine(user.DlcDir, dlcCode);
                 if (!Directory.Exists(newDlcAbsolutePath))
                 {
-                    logger.Info(string.Format("Extracting {0} to {1}", dlc.Name, newDlcAbsolutePath));
+                    logger.LogInformation(string.Format("Extracting {0} to {1}", dlc.Name, newDlcAbsolutePath));
                     // Filter only portraits files, to gain speed/space
                     string fileFilter = @"interface;gfx/characters";
                     fastZip.ExtractZip(dlc.AbsolutePath, newDlcAbsolutePath, fileFilter);
@@ -135,13 +135,13 @@ namespace PortraitBuilder.Engine
             List<Mod> mods = new List<Mod>();
             if (Directory.Exists(user.ModDir))
             {
-                logger.Info("Loading mods from " + user.ModDir);
+                logger.LogInformation("Loading mods from " + user.ModDir);
                 mods = modReader.ParseFolder(user.ModDir);
                 foreach (Mod mod in mods)
                 {
                     if (Directory.Exists(mod.AbsolutePath))
                     {
-                        logger.Info("Loading portraits from mod: " + mod.Name);
+                        logger.LogInformation("Loading portraits from mod: " + mod.Name);
                         var reader = new PortraitReader(mod.AbsolutePath);
                         mod.PortraitData = reader.Parse();
 
@@ -155,19 +155,19 @@ namespace PortraitBuilder.Engine
                     {
                         mod.Enabled = false;
                         mod.DisabledReason = "Archive format is not supported by PortraitBuilder";
-                        logger.Warn("Mod " + mod.Name + " is using archive format, which is not supported by PortraitBuilder");
+                        logger.LogWarning("Mod " + mod.Name + " is using archive format, which is not supported by PortraitBuilder");
                     }
                     else
                     {
                         mod.Enabled = false;
                         mod.DisabledReason = "Mod path does not not exist";
-                        logger.Error("Mod path " + mod.AbsolutePath + " does not exist");
+                        logger.LogError("Mod path " + mod.AbsolutePath + " does not exist");
                     }
                 }
             }
             else
             {
-                logger.Error("Mod directory " + user.ModDir + " doesn't exist");
+                logger.LogError("Mod directory " + user.ModDir + " doesn't exist");
             }
 
             return mods;
@@ -204,7 +204,7 @@ namespace PortraitBuilder.Engine
 
         public void RefreshContent(Content content)
         {
-            logger.Info("Refreshing content: " + content.Name);
+            logger.LogInformation("Refreshing content: " + content.Name);
             content.Unload();
 
             var reader = new PortraitReader(content.AbsolutePath);
@@ -235,7 +235,7 @@ namespace PortraitBuilder.Engine
             foreach (var layer in allLayers)
             {
                 layer.Offset = ActivePortraitData.Offsets[layer.Name];
-                logger.Debug(string.Format("Overriding offset of layer {0} to {1}", layer.Name, layer.Offset));
+                logger.LogDebug("Overriding offset of layer {0} to {1}", layer.Name, layer.Offset);
             }
         }
     }

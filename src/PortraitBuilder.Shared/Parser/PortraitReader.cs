@@ -4,7 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using Hime.Redist;
-using log4net;
+using Microsoft.Extensions.Logging;
 using PortraitBuilder.Model.Portrait;
 using SkiaSharp;
 
@@ -18,7 +18,7 @@ namespace PortraitBuilder.Parser
     public class PortraitReader
     {
 
-        private static readonly ILog logger = LogManager.GetLogger(typeof(PortraitReader));
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<PortraitReader>();
 
         /// <summary>
         /// Stateless portrait_offsets.txt file scanner
@@ -51,8 +51,8 @@ namespace PortraitBuilder.Parser
             try
             {
                 var fileNames = Enumerable.Empty<string>();
-                logger.Debug("Scanning for portrait data files in " + BaseDir);
-                logger.Debug("Directories: " + Directory.GetDirectories(BaseDir));
+                logger.LogDebug("Scanning for portrait data files in " + BaseDir);
+                logger.LogDebug("Directories: " + Directory.GetDirectories(BaseDir));
 
                 if (Directory.Exists(InterfaceDirectory))
                 {
@@ -60,7 +60,7 @@ namespace PortraitBuilder.Parser
                 }
                 else
                 {
-                    logger.Debug("Folder not found: " + Path.Combine(BaseDir, "interface"));
+                    logger.LogDebug("Folder not found: " + Path.Combine(BaseDir, "interface"));
                 }
 
                 // interface/portraits seems to be loaded after interface/, and override (cf byzantinegfx)
@@ -70,7 +70,7 @@ namespace PortraitBuilder.Parser
                 }
                 else
                 {
-                    logger.Debug("Folder not found: " + Path.Combine(BaseDir, "interface", "portraits"));
+                    logger.LogDebug("Folder not found: " + Path.Combine(BaseDir, "interface", "portraits"));
                 }
 
                 foreach (string fileName in fileNames)
@@ -89,7 +89,7 @@ namespace PortraitBuilder.Parser
             }
             catch (Exception e)
             {
-                logger.Error("Failed to parse portrait data in " + BaseDir, e);
+                logger.LogError("Failed to parse portrait data in " + BaseDir, e);
             }
 
             return data;
@@ -113,14 +113,14 @@ namespace PortraitBuilder.Parser
             var fi = new FileInfo(filename);
             if (!fi.Exists)
             {
-                logger.Error($"File not found: {filename}");
+                logger.LogError($"File not found: {filename}");
                 return;
             }
 
             // Exclude vanilla files with known errors
             if (BadFiles.Contains(fi.Name))
             {
-                logger.Info($"Skipping parsing of file: {filename}");
+                logger.LogInformation($"Skipping parsing of file: {filename}");
                 return;
             }
 
@@ -131,7 +131,7 @@ namespace PortraitBuilder.Parser
 
             if (!hasContent)
             {
-                logger.Warn($"File is empty: {filename}");
+                logger.LogWarning($"File is empty: {filename}");
                 return;
             }
 
@@ -148,7 +148,7 @@ namespace PortraitBuilder.Parser
 
             if (!result.IsSuccess)
             {
-                logger.Error($"Lexical error in file {fi.Name}, line {result.Errors}");
+                logger.LogError($"Lexical error in file {fi.Name}, line {result.Errors}");
                 return;
             }
 
@@ -177,7 +177,7 @@ namespace PortraitBuilder.Parser
                             var sprite = ParseSpriteType(child, filename);
                             if (data.Sprites.ContainsKey(sprite.Name))
                             {
-                                logger.Debug($"Sprite {sprite.Name} already exists. Replacing.");
+                                logger.LogDebug($"Sprite {sprite.Name} already exists. Replacing.");
                                 data.Sprites.Remove(sprite.Name);
                             }
                             data.Sprites.Add(sprite.Name, sprite);
@@ -186,7 +186,7 @@ namespace PortraitBuilder.Parser
                             var portraitType = ParsePortraitType(child, filename);
                             if (data.PortraitTypes.ContainsKey(portraitType.Name))
                             {
-                                logger.Debug($"Portrait type {portraitType.Name} already exists. Replacing.");
+                                logger.LogDebug($"Portrait type {portraitType.Name} already exists. Replacing.");
                                 data.PortraitTypes.Remove(portraitType.Name);
                             }
                             data.PortraitTypes.Add(portraitType.Name, portraitType);
@@ -195,7 +195,7 @@ namespace PortraitBuilder.Parser
                 }
                 catch (Exception e)
                 {
-                    logger.Error($"Could not parse {id} in file {filename}", e);
+                    logger.LogError($"Could not parse {id} in file {filename}", e);
                 }
             }
         }
@@ -235,10 +235,10 @@ namespace PortraitBuilder.Parser
                 }
             }
 
-            logger.Debug("Type parsed: ");
-            logger.Debug(" --ID: " + portraitType.Name);
-            logger.Debug(" --Hair Colour Index: " + portraitType.HairColourIndex);
-            logger.Debug(" --Eye Colour Index: " + portraitType.EyeColourIndex);
+            logger.LogDebug("Type parsed: ");
+            logger.LogDebug(" --ID: " + portraitType.Name);
+            logger.LogDebug(" --Hair Colour Index: " + portraitType.HairColourIndex);
+            logger.LogDebug(" --Eye Colour Index: " + portraitType.EyeColourIndex);
 
             // layer = {}
             portraitType.Layers.AddRange(ParseLayers(node.Children.Single(c => c.Symbol.Name == "layerGroup"), filename));
@@ -290,16 +290,16 @@ namespace PortraitBuilder.Parser
 
             for (int i = 0; i < children.Count; i += 3)
             {
-                logger.Debug(" --Parsing Hair colours");
+                logger.LogDebug(" --Parsing Hair colours");
 
                 var h_dark = ParseColor(children[i]);
-                logger.Debug("   --Dark: " + h_dark);
+                logger.LogDebug("   --Dark: " + h_dark);
 
                 var h_base = ParseColor(children[i + 1]);
-                logger.Debug("   --Base: " + h_base);
+                logger.LogDebug("   --Base: " + h_base);
 
                 var h_highlight = ParseColor(children[i + 2]);
-                logger.Debug("   --Highlight: " + h_highlight);
+                logger.LogDebug("   --Highlight: " + h_highlight);
 
                 hairs.Add(new Hair(h_dark, h_base, h_highlight));
             }
@@ -314,7 +314,7 @@ namespace PortraitBuilder.Parser
                 throw new InvalidOperationException($"Failed to parse color {child}");
 
             var color = new SKColor(red, green, blue);
-            logger.Debug(" --Colour Parsed: " + color);
+            logger.LogDebug(" --Colour Parsed: " + color);
             return color;
         }
 
@@ -329,7 +329,7 @@ namespace PortraitBuilder.Parser
                 }
                 catch (Exception e)
                 {
-                    logger.Error(string.Format("Could not parse layer {0} in file {1}", child.Value, filename), e);
+                    logger.LogError(string.Format("Could not parse layer {0} in file {1}", child.Value, filename), e);
                 }
             }
             return layers;
@@ -376,16 +376,16 @@ namespace PortraitBuilder.Parser
                 }
                 else
                 {
-                    logger.Warn(string.Format("Unkown syntax \"{0}\", for layer {1} in file {2}", layerParts[i], layer, filename));
+                    logger.LogWarning(string.Format("Unkown syntax \"{0}\", for layer {1} in file {2}", layerParts[i], layer, filename));
                 }
             }
 
             if (layer.Characteristic == null && layer.CultureIndex == -1)
             {
-                logger.Error(string.Format("Missing characterstic for layer {0} in file {1}", layer, filename));
+                logger.LogError(string.Format("Missing characterstic for layer {0} in file {1}", layer, filename));
             }
 
-            logger.Debug(" --Layer Parsed: " + layer);
+            logger.LogDebug(" --Layer Parsed: " + layer);
 
             return layer;
         }
@@ -426,7 +426,7 @@ namespace PortraitBuilder.Parser
                         break;
                 }
             }
-            logger.Debug("Sprite Parsed: " + sprite);
+            logger.LogDebug("Sprite Parsed: " + sprite);
 
             return sprite;
         }

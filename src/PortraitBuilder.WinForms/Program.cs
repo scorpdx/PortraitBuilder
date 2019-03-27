@@ -2,9 +2,7 @@
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
-using log4net;
-using log4net.Core;
-using log4net.Repository.Hierarchy;
+using Microsoft.Extensions.Logging;
 using PortraitBuilder.UI;
 
 namespace PortraitBuilder
@@ -12,7 +10,7 @@ namespace PortraitBuilder
     static class Program
     {
 
-        private static readonly ILog logger = LogManager.GetLogger(typeof(Program));
+        private static ILogger logger;
 
         private static bool isExiting = false;
 
@@ -22,7 +20,10 @@ namespace PortraitBuilder
         [STAThread]
         static void Main(string[] args)
         {
-            logger.Info("Starting application");
+            LoggingHelper.LoggerFactory = new LoggerFactory().AddLog4Net();
+            logger = LoggingHelper.CreateLogger("PortraitBuilder.WinForms");
+
+            logger.LogInformation("Starting application");
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -89,17 +90,13 @@ namespace PortraitBuilder
 
         private static void StartUI(string[] args)
         {
-            if (args.Length > 0 && args[0] == "-logfull")
-            {
-                ((Hierarchy)LogManager.GetRepository(nameof(PortraitBuilder.Program))).Root.Level = Level.Debug;
-            }
             try
             {
                 Application.Run(new PortraitBuilderForm());
             }
             catch (Exception e)
             {
-                logger.Fatal("Fatal error." + e);
+                logger.LogCritical("Fatal error." + e);
             }
         }
 
@@ -108,7 +105,7 @@ namespace PortraitBuilder
             try
             {
                 Exception exception = (Exception)e.ExceptionObject;
-                logger.Fatal("Unhandled exception", exception);
+                logger.LogCritical("Unhandled exception", exception);
                 // On Mono when exiting: cannot call invoke or BeginInvoke on a control until the window handle is created
                 if (!isExiting)
                 {
@@ -125,7 +122,7 @@ namespace PortraitBuilder
         {
             try
             {
-                logger.Fatal("Unhandled UI thread exception", t.Exception);
+                logger.LogCritical("Unhandled UI thread exception", t.Exception);
                 if (!isExiting)
                 {
                     MessageBox.Show("Unhandled UI exception:\n\n" + t.Exception.Message);
@@ -139,7 +136,7 @@ namespace PortraitBuilder
 
         private static void onExitApplication(object sender, EventArgs e)
         {
-            logger.Info("Closing application");
+            logger.LogInformation("Closing application");
             isExiting = true;
         }
     }

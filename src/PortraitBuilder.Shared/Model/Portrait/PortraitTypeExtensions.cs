@@ -1,14 +1,16 @@
-﻿using log4net;
+﻿using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 
 namespace PortraitBuilder.Model.Portrait
 {
     public static class PortraitTypeExtensions
     {
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<PortraitType>();
+
         /// <summary>
         /// Returns a new PortraitTytpe, with the clothing layers of basePortraitType overriden by clothingPortraitType
         /// </summary>
-        public static PortraitType Merge(this PortraitType basePortraitType, PortraitType clothingPortraitType, ILog logger = null)
+        public static PortraitType Merge(this PortraitType basePortraitType, PortraitType clothingPortraitType)
         {
             var mergedPortraitType = new PortraitType
             {
@@ -32,7 +34,7 @@ namespace PortraitBuilder.Model.Portrait
                     var overrideLayer = clothingPortraitType.GetCultureLayer(baseLayer.CultureIndex);
                     if (overrideLayer != null)
                     {
-                        logger?.Debug(string.Format("Overriding layer {0} with {1}", baseLayer, overrideLayer));
+                        logger.LogDebug("Overriding layer {0} with {1}", baseLayer, overrideLayer);
                         mergeLayer = new Layer
                         {
                             Characteristic = baseLayer.Characteristic,
