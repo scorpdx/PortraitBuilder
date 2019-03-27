@@ -278,7 +278,7 @@ namespace PortraitBuilder.Parser
 
             foreach (ASTNode child in children)
             {
-                colours.Add(ParseColour(child));
+                colours.Add(ParseColor(child));
             }
             return colours;
         }
@@ -292,13 +292,13 @@ namespace PortraitBuilder.Parser
             {
                 logger.Debug(" --Parsing Hair colours");
 
-                var h_dark = ParseColour(children[i]);
+                var h_dark = ParseColor(children[i]);
                 logger.Debug("   --Dark: " + h_dark);
 
-                var h_base = ParseColour(children[i + 1]);
+                var h_base = ParseColor(children[i + 1]);
                 logger.Debug("   --Base: " + h_base);
 
-                var h_highlight = ParseColour(children[i + 2]);
+                var h_highlight = ParseColor(children[i + 2]);
                 logger.Debug("   --Highlight: " + h_highlight);
 
                 hairs.Add(new Hair(h_dark, h_base, h_highlight));
@@ -306,11 +306,12 @@ namespace PortraitBuilder.Parser
             return hairs;
         }
 
-        private SKColor ParseColour(ASTNode child)
+        private SKColor ParseColor(ASTNode child)
         {
-            var red = parseByte(child.Children[0].Value);
-            var green = parseByte(child.Children[1].Value);
-            var blue = parseByte(child.Children[2].Value);
+            if (!byte.TryParse(child.Children[0].Value, out byte red)
+                || !byte.TryParse(child.Children[1].Value, out byte green)
+                || !byte.TryParse(child.Children[2].Value, out byte blue))
+                throw new InvalidOperationException($"Failed to parse color {child}");
 
             var color = new SKColor(red, green, blue);
             logger.Debug(" --Colour Parsed: " + color);
