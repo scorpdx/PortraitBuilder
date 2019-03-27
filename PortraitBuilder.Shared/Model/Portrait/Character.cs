@@ -6,10 +6,8 @@ namespace PortraitBuilder.Model.Portrait
 
     /// <summary>
     /// Input data (dna and properties) used to display a portrait.
-    /// 
-    /// TODO Rename this to Character !
     /// </summary>
-    public partial class Portrait
+    public class Character
     {
         public static char[] Alphabet { get; } = "abcdefghijklmnopqrstuvwxyz".ToCharArray();
 

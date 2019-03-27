@@ -9,7 +9,7 @@ namespace PortraitBuilder.UI
         private bool isDNAValid = false;
         private bool isPropertiesValid = false;
 
-        public Portrait portrait = new Portrait();
+        public Character character = new Character();
 
         public ImportDialog()
         {
@@ -23,7 +23,7 @@ namespace PortraitBuilder.UI
 
         private void btnOK_Click(object sender, EventArgs e)
         {
-            portrait.Import(tbDNA.Text, tbProperties.Text);
+            character.Import(tbDNA.Text, tbProperties.Text);
 
             DialogResult = DialogResult.OK;
             Close();

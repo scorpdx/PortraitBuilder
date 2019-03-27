@@ -27,8 +27,8 @@ namespace PortraitBuilder.Online
 
             string customProperties = req.Query["customProperties"];
 
-            var portrait = new Portrait();
-            portrait.Import(dna, properties + customProperties);
+            var character = new Character();
+            character.Import(dna, properties + customProperties);
 
             // Reflect on dropdown
             //updateSelectedCharacteristicValues(portrait);
@@ -51,9 +51,9 @@ namespace PortraitBuilder.Online
                 //return;
             }
             var selectedPortraitType = "andalusiangfx_male";
-            portrait.PortraitType = loader.GetPortraitType($"PORTRAIT_{selectedPortraitType}");
+            character.PortraitType = loader.GetPortraitType($"PORTRAIT_{selectedPortraitType}");
 
-            var bmp = portraitRenderer.DrawPortrait(portrait, loader.ActiveContents, loader.ActivePortraitData.Sprites);
+            var bmp = portraitRenderer.DrawCharacter(character, loader.ActiveContents, loader.ActivePortraitData.Sprites);
             var png = SKImage.FromBitmap(bmp).Encode();
 
             //string requestBody = await new StreamReader(req.Body).ReadToEndAsync();

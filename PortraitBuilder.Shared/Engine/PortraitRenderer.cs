@@ -38,12 +38,12 @@ namespace PortraitBuilder.Engine
         /// Draws a character portrait.
         /// </summary>
         /// <param name="portraitType">PortaitType to use for drawing.</param>
-        /// <param name="portrait">Portrait input to draw.</param>
+        /// <param name="character">Portrait input to draw.</param>
         /// <param name="activeContents">Content to load sprites from</param>
         /// <returns>Frameless portrait drawn with the given parameters.</returns>
-        public SKBitmap DrawPortrait(Portrait portrait, List<Content> activeContents, Dictionary<string, Sprite> sprites)
+        public SKBitmap DrawCharacter(Character character, List<Content> activeContents, Dictionary<string, Sprite> sprites)
         {
-            logger.Info($"Drawing Portrait {portrait}");
+            logger.Info($"Drawing Portrait {character}");
 
             var portraitInfo = new SKImageInfo(176, 176);
             var portraitImage = new SKBitmap(portraitInfo);
@@ -52,21 +52,21 @@ namespace PortraitBuilder.Engine
                 //must set transparent bg for unpremul -> premul
                 canvas.Clear(SKColors.Transparent);
 
-                foreach (var layer in portrait.PortraitType.Layers)
+                foreach (var layer in character.PortraitType.Layers)
                 {
-                    DrawLayer(layer, canvas, portrait, activeContents, sprites);
+                    DrawLayer(layer, canvas, character, activeContents, sprites);
                 }
 
-                DrawBorder(portrait, canvas, activeContents, sprites);
+                DrawBorder(character, canvas, activeContents, sprites);
             }
             return portraitImage;
         }
 
-        private void DrawLayer(Layer layer, SKCanvas canvas, Portrait portrait, List<Content> activeContents, Dictionary<string, Sprite> sprites)
+        private void DrawLayer(Layer layer, SKCanvas canvas, Character character, List<Content> activeContents, Dictionary<string, Sprite> sprites)
         {
             logger.Debug($"Drawing Layer : {layer}");
 
-            string spriteName = GetOverriddenSpriteName(portrait, layer);
+            string spriteName = GetOverriddenSpriteName(character, layer);
 
             // Backup for merchants, which are part of "The Republic" DLC !
             if (!sprites.ContainsKey(spriteName))
@@ -87,9 +87,9 @@ namespace PortraitBuilder.Engine
                     }
 
                     //Get DNA/Properties letter, then the index of the tile to draw
-                    int tileIndex = GetTileIndex(portrait, sprite.FrameCount, layer);
+                    int tileIndex = GetTileIndex(character, sprite.FrameCount, layer);
 
-                    DrawTile(portrait, canvas, sprite, layer, tileIndex);
+                    DrawTile(character, canvas, sprite, layer, tileIndex);
                 }
                 else
                 {
@@ -107,16 +107,16 @@ namespace PortraitBuilder.Engine
         /// 
         /// This is quite messy - not sure what hardcoded vanilla logic exactly is - could be based on culture index ?!
         /// </summary>
-        /// <param name="portrait"></param>
+        /// <param name="character"></param>
         /// <param name="layer"></param>
         /// <returns></returns>
-        private string GetOverriddenSpriteName(Portrait portrait, Layer layer)
+        private string GetOverriddenSpriteName(Character character, Layer layer)
         {
             string spriteName = layer.Name;
-            var gov = portrait.Government;
+            var gov = character.Government;
             if ((gov == GovernmentType.Theocracy || gov == GovernmentType.MerchantRepublic) && (layer.Characteristic == Characteristic.CLOTHES || layer.Characteristic == Characteristic.HEADGEAR))
             {
-                string sex = portrait.Sex == Sex.Male ? "male" : "female";
+                string sex = character.Sex == Sex.Male ? "male" : "female";
                 string layerSuffix = spriteName.Contains("behind") ? "_behind" : ""; // Handles clothes_infront and headgear_mid
                 string government = gov == GovernmentType.Theocracy ? "religious" : "merchant";
                 string layerType = layer.Characteristic == Characteristic.CLOTHES ? "clothes" : "headgear";
@@ -125,12 +125,12 @@ namespace PortraitBuilder.Engine
             return spriteName;
         }
 
-        private void DrawBorder(Portrait portrait, SKCanvas canvas, List<Content> activeContents, Dictionary<string, Sprite> sprites)
+        private void DrawBorder(Character character, SKCanvas canvas, List<Content> activeContents, Dictionary<string, Sprite> sprites)
         {
             logger.Debug("Drawing border.");
             try
             {
-                string governmentSpriteName = "GFX_charframe_150" + GovernmentSpriteSuffix[portrait.Government];
+                string governmentSpriteName = "GFX_charframe_150" + GovernmentSpriteSuffix[character.Government];
                 if (sprites.ContainsKey(governmentSpriteName))
                 {
                     Sprite sprite = sprites[governmentSpriteName];
@@ -140,7 +140,7 @@ namespace PortraitBuilder.Engine
                     {
                         LoadSprite(sprite, activeContents);
                     }
-                    canvas.DrawBitmap(sprite.Tiles[portrait.Rank], SKPoint.Empty);
+                    canvas.DrawBitmap(sprite.Tiles[character.Rank], SKPoint.Empty);
                 }
             }
             catch (Exception e)
@@ -149,10 +149,10 @@ namespace PortraitBuilder.Engine
             }
         }
 
-        private int GetTileIndex(Portrait portrait, int frameCount, Layer layer)
+        private int GetTileIndex(Character character, int frameCount, Layer layer)
         {
-            char letter = portrait.GetLetter(layer.Characteristic);
-            int tileIndex = Portrait.GetIndex(letter, frameCount);
+            char letter = character.GetLetter(layer.Characteristic);
+            int tileIndex = Character.GetIndex(letter, frameCount);
             logger.Debug($"Layer letter: {letter}, Tile Index: {tileIndex}");
             return tileIndex;
         }
@@ -196,19 +196,19 @@ namespace PortraitBuilder.Engine
             }
         }
 
-        private void DrawTile(Portrait portrait, SKCanvas canvas, Sprite sprite, Layer layer, int tileIndex)
+        private void DrawTile(Character character, SKCanvas canvas, Sprite sprite, Layer layer, int tileIndex)
         {
             SKBitmap tile;
             if (layer.IsHair)
             {
-                var hairColors = portrait.PortraitType.HairColours;
-                int hairIndex = Portrait.GetIndex(portrait.GetLetter(Characteristic.HAIR_COLOR), hairColors.Count);
+                var hairColors = character.PortraitType.HairColours;
+                int hairIndex = Character.GetIndex(character.GetLetter(Characteristic.HAIR_COLOR), hairColors.Count);
                 tile = DrawHair(sprite.Tiles[tileIndex], hairColors[hairIndex]);
             }
             else if (layer.IsEye)
             {
-                var eyeColors = portrait.PortraitType.EyeColours;
-                int eyeIndex = Portrait.GetIndex(portrait.GetLetter(Characteristic.EYE_COLOR), eyeColors.Count);
+                var eyeColors = character.PortraitType.EyeColours;
+                int eyeIndex = Character.GetIndex(character.GetLetter(Characteristic.EYE_COLOR), eyeColors.Count);
                 tile = DrawEye(sprite.Tiles[tileIndex], eyeColors[eyeIndex]);
             }
             else

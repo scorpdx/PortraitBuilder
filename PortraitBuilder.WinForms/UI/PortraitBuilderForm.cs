@@ -46,7 +46,7 @@ namespace PortraitBuilder.UI
         /// 
         /// This is the primary Model object, whose state is modified by UI inputs, and used to display the output.
         /// </summary>
-        private Portrait portrait = new Portrait();
+        private Character character = new Character();
 
         /// <summary>
         /// ComboBox for vanilla dna, ordered by their dna index.
@@ -298,7 +298,7 @@ namespace PortraitBuilder.UI
 
             try
             {
-                var rendered = portraitRenderer.DrawPortrait(portrait, loader.ActiveContents, loader.ActivePortraitData.Sprites);
+                var rendered = portraitRenderer.DrawCharacter(character, loader.ActiveContents, loader.ActivePortraitData.Sprites);
                 previewImage = SKImage.FromBitmap(rendered);
             }
             catch (Exception e)
@@ -332,19 +332,16 @@ namespace PortraitBuilder.UI
             StringBuilder dnaPropOutput = new StringBuilder();
 
             dnaPropOutput.Append("  dna=\"");
-            dnaPropOutput.Append(portrait.DNA);
+            dnaPropOutput.Append(character.DNA);
             dnaPropOutput.AppendLine("\"");
 
             dnaPropOutput.Append("  properties=\"");
-            dnaPropOutput.Append(portrait.Properties);
+            dnaPropOutput.Append(character.Properties);
             dnaPropOutput.AppendLine("\"");
             tbDNA.Text = dnaPropOutput.ToString();
         }
 
-        private char GetLetter(ComboBox cb)
-        {
-            return Portrait.GetLetter(cb.SelectedIndex);
-        }
+        private char GetLetter(ComboBox cb) => Character.GetLetter(cb.SelectedIndex);
 
         /// <summary>
         /// Some very specific characristics are not randomized: scars, red dots, boils, prisoner, blinded.
@@ -402,7 +399,7 @@ namespace PortraitBuilder.UI
         private void fillComboBox(ComboBox cb, Characteristic characteristic)
         {
             cb.Items.Clear();
-            PortraitType portraitType = portrait.PortraitType;
+            PortraitType portraitType = character.PortraitType;
             if (portraitType == null)
                 return;
 
@@ -514,7 +511,7 @@ namespace PortraitBuilder.UI
             {
                 cbCulturePortraitTypes.SelectedIndex = 0;
             }
-            portrait.PortraitType = getSelectedPortraitType();
+            character.PortraitType = getSelectedPortraitType();
         }
 
         private void updateActiveAdditionalContent()
@@ -539,13 +536,13 @@ namespace PortraitBuilder.UI
             return selectedContent;
         }
 
-        private void updateSelectedCharacteristicValues(Portrait portrait)
+        private void updateSelectedCharacteristicValues(Character character)
         {
             foreach (KeyValuePair<Characteristic, ComboBox> pair in dnaComboBoxes)
             {
                 if (pair.Value != null)
                 {
-                    pair.Value.SelectedIndex = Portrait.GetIndex(portrait.DNA[pair.Key.index], pair.Value.Items.Count);
+                    pair.Value.SelectedIndex = Character.GetIndex(character.DNA[pair.Key.index], pair.Value.Items.Count);
                 }
             }
 
@@ -553,14 +550,14 @@ namespace PortraitBuilder.UI
             {
                 if (pair.Value != null)
                 {
-                    pair.Value.SelectedIndex = Portrait.GetIndex(portrait.Properties[pair.Key.index], pair.Value.Items.Count);
+                    pair.Value.SelectedIndex = Character.GetIndex(character.Properties[pair.Key.index], pair.Value.Items.Count);
                 }
             }
         }
 
         private void updatePortrait(string dna, string properties, string customProperties)
         {
-            portrait.Import(dna, properties + customProperties);
+            character.Import(dna, properties + customProperties);
             outputDNA();
         }
 
@@ -656,13 +653,13 @@ namespace PortraitBuilder.UI
 
         private void onChangeRank(object sender, EventArgs e)
         {
-            portrait.Rank = cbRank.SelectedIndex;
+            character.Rank = cbRank.SelectedIndex;
             drawPortrait();
         }
 
         private void onChangeGovernment(object sender, EventArgs e)
         {
-            portrait.Government = (GovernmentType)cbGovernment.SelectedIndex;
+            character.Government = (GovernmentType)cbGovernment.SelectedIndex;
             drawPortrait();
         }
 
@@ -690,10 +687,10 @@ namespace PortraitBuilder.UI
             {
                 started = false;
 
-                updatePortrait(dialog.portrait.DNA, dialog.portrait.Properties, "");
+                updatePortrait(dialog.character.DNA, dialog.character.Properties, "");
 
                 // Reflect on dropdown
-                updateSelectedCharacteristicValues(portrait);
+                updateSelectedCharacteristicValues(character);
 
                 started = true;
 
@@ -728,12 +725,12 @@ namespace PortraitBuilder.UI
                 started = false;
 
                 PortraitType selectedPortraitType = getSelectedPortraitType();
-                portrait.PortraitType = selectedPortraitType;
+                character.PortraitType = selectedPortraitType;
 
                 refreshCustomCharacectiristics();
 
                 fillCharacteristicComboBoxes();
-                updateSelectedCharacteristicValues(portrait);
+                updateSelectedCharacteristicValues(character);
 
                 started = true;
 
