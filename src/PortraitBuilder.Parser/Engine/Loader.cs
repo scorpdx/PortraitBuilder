@@ -200,9 +200,9 @@ namespace PortraitBuilder.Engine
             content.Unload();
         }
 
-        public void UpdateActiveAdditionalContent(List<Content> contents)
+        public void UpdateActiveAdditionalContent(IReadOnlyCollection<Content> contents)
         {
-            foreach (Content content in ActiveContents)
+            foreach (var content in ActiveContents)
             {
                 if (!contents.Contains(content))
                 {
