@@ -112,15 +112,19 @@ namespace PortraitBuilder.Engine
         private string GetOverriddenSpriteName(Character character, Layer layer)
         {
             string spriteName = layer.Name;
-            var gov = character.Government;
-            if ((gov == GovernmentType.Theocracy || gov == GovernmentType.MerchantRepublic) && (layer.Characteristic == Characteristic.CLOTHES || layer.Characteristic == Characteristic.HEADGEAR))
+
+            var hasSpecialGovernment = character.Government == GovernmentType.Theocracy || character.Government == GovernmentType.MerchantRepublic;
+            var isOutfitLayer = layer.Characteristic == Characteristic.CLOTHES || layer.Characteristic == Characteristic.HEADGEAR;
+
+            if (hasSpecialGovernment && isOutfitLayer)
             {
                 string sex = character.Sex == Sex.Male ? "male" : "female";
                 string layerSuffix = spriteName.Contains("behind") ? "_behind" : ""; // Handles clothes_infront and headgear_mid
-                string government = gov == GovernmentType.Theocracy ? "religious" : "merchant";
+                string government = character.Government == GovernmentType.Theocracy ? "religious" : "merchant";
                 string layerType = layer.Characteristic == Characteristic.CLOTHES ? "clothes" : "headgear";
                 spriteName = $"GFX_{government}_{sex}_{layerType}{layerSuffix}";
             }
+
             return spriteName;
         }
 

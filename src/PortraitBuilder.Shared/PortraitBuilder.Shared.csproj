@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <PackageReference Include="Hime.Redist" Version="3.4.0" />
-    <PackageReference Include="log4net" Version="2.0.8" />
     <PackageReference Include="Pfim" Version="0.5.2" />
     <PackageReference Include="SharpZipLib" Version="1.1.0" />
     <PackageReference Include="SkiaSharp" Version="1.68.0" />

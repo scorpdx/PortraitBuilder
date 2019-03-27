@@ -220,17 +220,17 @@ namespace PortraitBuilder.Parser
 
                 switch (token.Symbol.Name)
                 {
-                    case "stringOption":
-                        if (id == "name")
-                            portraitType.Name = value.Replace("\"", "");
-                        if (id == "effectFile")
-                            portraitType.EffectFile = value.Replace("\"", "").Replace(@"\\", @"\");
+                    case "stringOption" when id == "name":
+                        portraitType.Name = value.Replace("\"", "");
                         break;
-                    case "numberOption":
-                        if (id == "hair_color_index")
-                            portraitType.HairColourIndex = parseInt(value);
-                        if (id == "eye_color_index")
-                            portraitType.EyeColourIndex = parseInt(value);
+                    case "stringOption" when id == "effectFile":
+                        portraitType.EffectFile = value.Replace("\"", "").Replace(@"\\", @"\");
+                        break;
+                    case "numberOption" when id == "hair_color_index":
+                        portraitType.HairColourIndex = int.Parse(value);
+                        break;
+                    case "numberOption" when id == "eye_color_index":
+                        portraitType.EyeColourIndex = int.Parse(value);
                         break;
                 }
             }
@@ -248,7 +248,7 @@ namespace PortraitBuilder.Parser
             if (children.Count > 0)
             {
                 foreach (ASTNode child in children[0].Children)
-                    portraitType.HeadgearThatHidesHair.Add(parseInt(child.Value));
+                    portraitType.HeadgearThatHidesHair.Add(int.Parse(child.Value));
             }
 
             // hair_color = {} / eye_color = {}
@@ -347,11 +347,11 @@ namespace PortraitBuilder.Parser
             {
                 if (layerParts[i].StartsWith("d"))
                 {
-                    layer.Characteristic = Characteristic.getDna(parseInt(layerParts[i].Substring(1)));
+                    layer.Characteristic = Characteristic.getDna(int.Parse(layerParts[i].Substring(1)));
                 }
                 else if (layerParts[i].StartsWith("p"))
                 {
-                    layer.Characteristic = Characteristic.getProperty(parseInt(layerParts[i].Substring(1)));
+                    layer.Characteristic = Characteristic.getProperty(int.Parse(layerParts[i].Substring(1)));
                 }
                 else if (layerParts[i] == "h" || layerParts[i] == "x")
                 {
@@ -368,11 +368,11 @@ namespace PortraitBuilder.Parser
                 else if (layerParts[i].StartsWith("o"))
                 {
                     string[] offsets = layerParts[i].Substring(1).Split('x');
-                    layer.Offset = new Point(parseInt(offsets[0]), parseInt(offsets[1]));
+                    layer.Offset = new Point(int.Parse(offsets[0]), int.Parse(offsets[1]));
                 }
                 else if (layerParts[i].StartsWith("c"))
                 {
-                    layer.CultureIndex = parseInt(layerParts[i].Substring(1));
+                    layer.CultureIndex = int.Parse(layerParts[i].Substring(1));
                 }
                 else
                 {
@@ -422,40 +422,13 @@ namespace PortraitBuilder.Parser
                         break;
                     case "numberOption":
                         if (id == "noOfFrames" || id == "noOfframes")
-                            sprite.FrameCount = parseInt(value);
+                            sprite.FrameCount = int.Parse(value);
                         break;
                 }
             }
             logger.Debug("Sprite Parsed: " + sprite);
 
             return sprite;
-        }
-
-        /// <summary>
-        /// int.Parse does not put the parsed text in the FormatException !
-        /// </summary>
-        private int parseInt(string s)
-        {
-            try
-            {
-                return int.Parse(s);
-            }
-            catch (FormatException e)
-            {
-                throw new FormatException("The string " + s + " cannot be parsed as an int", e);
-            }
-        }
-
-        private byte parseByte(string s)
-        {
-            try
-            {
-                return byte.Parse(s);
-            }
-            catch (OverflowException e)
-            {
-                throw new OverflowException("The string " + s + " cannot be parsed as a byte", e);
-            }
         }
     }
 }
