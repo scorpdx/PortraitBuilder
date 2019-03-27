@@ -652,7 +652,7 @@ namespace PortraitBuilder.UI
 
         private void onChangeRank(object sender, EventArgs e)
         {
-            character.Rank = cbRank.SelectedIndex;
+            character.Rank = (TitleRank)cbRank.SelectedIndex;
             drawPortrait();
         }
 
@@ -719,22 +719,22 @@ namespace PortraitBuilder.UI
 
         private void onChangePortraitType(object sender, EventArgs e)
         {
-            if (started)
-            {
-                started = false;
+            if (!started)
+                return;
 
-                PortraitType selectedPortraitType = getSelectedPortraitType();
-                character.PortraitType = selectedPortraitType;
+            started = false;
 
-                refreshCustomCharacteristics();
+            PortraitType selectedPortraitType = getSelectedPortraitType();
+            character.PortraitType = selectedPortraitType;
 
-                fillCharacteristicComboBoxes();
-                updateSelectedCharacteristicValues(character);
+            refreshCustomCharacteristics();
 
-                started = true;
+            fillCharacteristicComboBoxes();
+            updateSelectedCharacteristicValues(character);
 
-                drawPortrait();
-            }
+            started = true;
+
+            drawPortrait();
         }
 
         private void onClickReload(object sender, EventArgs e)
