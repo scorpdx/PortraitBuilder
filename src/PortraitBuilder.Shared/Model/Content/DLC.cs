@@ -6,7 +6,7 @@
         /// <summary>
         /// Name of .dlc file, E.g. dlc060.dlc
         /// </summary>
-        public string DLCFile;
+        public string DLCFile { get; }
 
         /// <summary>
         /// Relative path to the mod archive, E.g. dlc/dlc060.zip
@@ -25,6 +25,11 @@
         /// Wether the DLC affacts the checksum
         /// </summary>
         public bool AffectsChecksum;
+
+        public DLC(string filename)
+        {
+            this.DLCFile = filename;
+        }
 
         public override string ToString()
         {

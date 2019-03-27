@@ -86,24 +86,24 @@ namespace PortraitBuilder.Engine
                 // Cleanup temporary DLC Dir
                 Directory.Delete(user.DlcDir, true);
             }
-            return LoadDLCs();
+            return LoadDLCs().ToList();
         }
 
-        public List<DLC> LoadDLCs()
+        public IEnumerable<DLC> LoadDLCs()
         {
             string dlcFolder = Path.Combine(user.GameDir, "DLC");
             logger.LogInformation("Loading DLCs from " + dlcFolder);
-            List<DLC> dlcs = dlcReader.ParseFolder(dlcFolder);
 
-            UnzipDLCs(dlcs);
-
-            foreach (DLC dlc in dlcs)
+            foreach (DLC dlc in dlcReader.ParseFolder(dlcFolder))
             {
+                UnzipDLC(dlc);
+
                 logger.LogInformation("Loading portraits from DLC: " + dlc.Name);
                 var reader = new PortraitReader(dlc.AbsolutePath);
                 dlc.PortraitData = reader.Parse();
+
+                yield return dlc;
             }
-            return dlcs;
         }
 
         private static Regex[] DlcEntryFilters { get; } = "interface;gfx/characters"
@@ -115,36 +115,33 @@ namespace PortraitBuilder.Engine
         /// Unzip DLC, only if tmp folder doesn't already exist
         /// </summary>
         /// <param name="dlcs"></param>
-        private void UnzipDLCs(List<DLC> dlcs)
+        private void UnzipDLC(DLC dlc)
         {
-            foreach (DLC dlc in dlcs)
+            string dlcCode = dlc.DLCFile.Replace(".dlc", "");
+            string newDlcAbsolutePath = Path.Combine(user.DlcDir, dlcCode);
+            if (!Directory.Exists(newDlcAbsolutePath))
             {
-                string dlcCode = dlc.DLCFile.Replace(".dlc", "");
-                string newDlcAbsolutePath = Path.Combine(user.DlcDir, dlcCode);
-                if (!Directory.Exists(newDlcAbsolutePath))
+                logger.LogInformation(string.Format("Extracting {0} to {1}", dlc.Name, newDlcAbsolutePath));
+                // Filter only portraits files, to gain speed/space
+                using (var zip = ZipFile.OpenRead(dlc.AbsolutePath))
                 {
-                    logger.LogInformation(string.Format("Extracting {0} to {1}", dlc.Name, newDlcAbsolutePath));
-                    // Filter only portraits files, to gain speed/space
-                    using (var zip = ZipFile.OpenRead(dlc.AbsolutePath))
+                    var filteredEntries = zip.Entries
+                        .Where(e => e.Length > 0)
+                        .Where(e => DlcEntryFilters.Any(r => r.IsMatch(e.FullName)));
+                    foreach (var entry in filteredEntries)
                     {
-                        var filteredEntries = zip.Entries
-                            .Where(e => e.Length > 0)
-                            .Where(e => DlcEntryFilters.Any(r => r.IsMatch(e.FullName)));
-                        foreach (var entry in filteredEntries)
-                        {
-                            var fi = new FileInfo(Path.Combine(newDlcAbsolutePath, entry.FullName));
-                            fi.Directory.CreateSubdirectory(".");
+                        var fi = new FileInfo(Path.Combine(newDlcAbsolutePath, entry.FullName));
+                        fi.Directory.CreateSubdirectory(".");
 
-                            entry.ExtractToFile(fi.FullName);
-                        }
+                        entry.ExtractToFile(fi.FullName);
                     }
-                    //ZipFile.ExtractToDirectory(dlc.AbsolutePath, newDlcAbsolutePath, fileFilter);
-
-                    // In any case, create the directory, so that it is ignored for next load.
-                    Directory.CreateDirectory(newDlcAbsolutePath);
                 }
-                dlc.AbsolutePath = newDlcAbsolutePath;
+                //ZipFile.ExtractToDirectory(dlc.AbsolutePath, newDlcAbsolutePath, fileFilter);
+
+                // In any case, create the directory, so that it is ignored for next load.
+                Directory.CreateDirectory(newDlcAbsolutePath);
             }
+            dlc.AbsolutePath = newDlcAbsolutePath;
         }
 
         public List<Mod> LoadMods()
