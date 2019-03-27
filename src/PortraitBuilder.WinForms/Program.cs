@@ -79,14 +79,7 @@ namespace PortraitBuilder
             }
         }
 
-        private static void SetDir(string dir)
-        {
-            Stream stream = new FileStream("gamedir.txt", FileMode.Create);
-            StreamWriter writer = new StreamWriter(stream);
-            writer.Write(dir);
-            writer.Flush();
-            stream.Close();
-        }
+        private static void SetDir(string dir) => File.WriteAllText("gamedir.txt", dir);
 
         private static void StartUI(string[] args)
         {
