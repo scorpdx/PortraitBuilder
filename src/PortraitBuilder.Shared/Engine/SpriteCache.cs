@@ -8,7 +8,7 @@ using System.IO;
 
 namespace PortraitBuilder.Engine
 {
-    public sealed class SpriteCache : IDisposable
+    public sealed class SpriteCache : IDisposable, ISpriteCache
     {
         private static readonly ILogger logger = LoggingHelper.CreateLogger<SpriteCache>();
 
@@ -73,7 +73,7 @@ namespace PortraitBuilder.Engine
                     var oldDict = _sprites;
                     _sprites = null;
 
-                    foreach(var sprite in oldDict.Values)
+                    foreach (var sprite in oldDict.Values)
                     {
                         sprite.Dispose();
                     }

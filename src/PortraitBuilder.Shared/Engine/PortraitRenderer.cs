@@ -40,7 +40,7 @@ namespace PortraitBuilder.Engine
         /// <param name="character">Portrait input to draw.</param>
         /// <param name="activeContents">Content to load sprites from</param>
         /// <returns>Frameless portrait drawn with the given parameters.</returns>
-        public SKBitmap DrawCharacter(Character character, SpriteCache cache, Dictionary<string, SpriteDef> sprites)
+        public SKBitmap DrawCharacter(Character character, ISpriteCache cache, Dictionary<string, SpriteDef> sprites)
         {
             logger.LogInformation($"Drawing Portrait {character}");
 
@@ -64,7 +64,7 @@ namespace PortraitBuilder.Engine
             return portraitImage;
         }
 
-        private bool DrawLayer(Layer layer, SKCanvas canvas, Character character, SpriteCache cache, Dictionary<string, SpriteDef> sprites)
+        private bool DrawLayer(Layer layer, SKCanvas canvas, Character character, ISpriteCache cache, Dictionary<string, SpriteDef> sprites)
         {
             logger.LogDebug($"Drawing Layer : {layer}");
 
@@ -110,7 +110,7 @@ namespace PortraitBuilder.Engine
             return spriteName;
         }
 
-        private void DrawBorder(Character character, SKCanvas canvas, SpriteCache cache, Dictionary<string, SpriteDef> sprites)
+        private void DrawBorder(Character character, SKCanvas canvas, ISpriteCache cache, Dictionary<string, SpriteDef> sprites)
         {
             logger.LogDebug("Drawing border.");
             try
