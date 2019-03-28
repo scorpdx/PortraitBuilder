@@ -41,6 +41,8 @@ namespace PortraitBuilder.Engine
         /// </summary>
         public List<Content> ActiveContents { get; } = new List<Content>();
 
+        public SpriteCache Cache { get; private set; }
+
         /// <summary>
         /// Merged portraitData of all active content.
         /// </summary>
@@ -77,6 +79,7 @@ namespace PortraitBuilder.Engine
             // Init
             ActivePortraitData = vanilla.PortraitData;
             ActiveContents.Add(vanilla);
+            InvalidateCache();
         }
 
         public List<DLC> LoadDLCs(Boolean clean)
@@ -191,12 +194,15 @@ namespace PortraitBuilder.Engine
         {
             // TODO load order
             ActiveContents.Add(content);
+            InvalidateCache();
+
             RefreshContent(content);
         }
 
         public void DeactivateContent(Content content)
         {
             ActiveContents.Remove(content);
+            InvalidateCache();
         }
 
         public void UpdateActiveAdditionalContent(IReadOnlyCollection<Content> contents)
@@ -204,6 +210,13 @@ namespace PortraitBuilder.Engine
             ActiveContents.Clear();
             ActiveContents.Add(vanilla);
             ActiveContents.AddRange(contents);
+            InvalidateCache();
+        }
+
+        private void InvalidateCache()
+        {
+            Cache?.Dispose();
+            Cache = new SpriteCache(ActiveContents);
         }
 
         public void RefreshContent(Content content)

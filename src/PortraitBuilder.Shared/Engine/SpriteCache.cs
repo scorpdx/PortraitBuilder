@@ -16,9 +16,10 @@ namespace PortraitBuilder.Engine
 
         private ConcurrentDictionary<SpriteDef, Sprite> _sprites;
 
-        public SpriteCache(IReadOnlyList<Content> activeContent)
+        public SpriteCache(IEnumerable<Content> activeContent)
         {
-            ActiveContent = activeContent;
+            //create a copy
+            ActiveContent = new List<Content>(activeContent);
             _sprites = new ConcurrentDictionary<SpriteDef, Sprite>();
         }
 

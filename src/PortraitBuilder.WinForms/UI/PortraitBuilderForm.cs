@@ -33,8 +33,6 @@ namespace PortraitBuilder.UI
 
         private Loader loader;
 
-        private SpriteCache _cache;
-
         private PortraitRenderer portraitRenderer = new PortraitRenderer();
 
         /// <summary>
@@ -299,13 +297,7 @@ namespace PortraitBuilder.UI
 
             try
             {
-                if(_cache == null || _cache.ActiveContent != loader.ActiveContents)
-                {
-                    _cache?.Dispose();
-                    _cache = new SpriteCache(loader.ActiveContents);
-                }
-
-                var rendered = portraitRenderer.DrawCharacter(character, _cache, loader.ActivePortraitData.Sprites);
+                var rendered = portraitRenderer.DrawCharacter(character, loader.Cache, loader.ActivePortraitData.Sprites);
                 previewImage = SKImage.FromBitmap(rendered);
             }
             catch (Exception e)
