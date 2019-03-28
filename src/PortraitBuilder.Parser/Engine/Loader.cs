@@ -22,21 +22,6 @@ namespace PortraitBuilder.Engine
         private static readonly ILogger logger = LoggingHelper.CreateLogger<Loader>();
 
         /// <summary>
-        /// User configuration: game path, etc.
-        /// </summary>
-        private User user;
-
-        /// <summary>
-        /// Stateless mod scanner
-        /// </summary>
-        private ModReader modReader = new ModReader();
-
-        /// <summary>
-        /// Stateless dlc scanner
-        /// </summary>
-        private DLCReader dlcReader = new DLCReader();
-
-        /// <summary>
         /// DLCs or Mods that are checked
         /// </summary>
         public List<Content> ActiveContents { get; } = new List<Content>();
@@ -53,11 +38,6 @@ namespace PortraitBuilder.Engine
         /// </summary>
         private Content vanilla;
 
-        public Loader(User user)
-        {
-            this.user = user;
-        }
-
         public PortraitType GetPortraitType(string basePortraitType)
         {
             return ActivePortraitData.PortraitTypes[basePortraitType];
@@ -66,14 +46,14 @@ namespace PortraitBuilder.Engine
         public PortraitType GetPortraitType(string basePortraitType, string clothingPortraitType)
             => ActivePortraitData.PortraitTypes[basePortraitType].Merge(ActivePortraitData.PortraitTypes[clothingPortraitType]);
 
-        public void LoadVanilla()
+        public void LoadVanilla(string gameDir)
         {
             vanilla = new Content();
             vanilla.Name = "vanilla";
-            vanilla.AbsolutePath = user.GameDir;
+            vanilla.AbsolutePath = gameDir;
 
             logger.LogInformation("Loading portraits from vanilla.");
-            var reader = new PortraitReader(user.GameDir);
+            var reader = new PortraitReader(gameDir);
             vanilla.PortraitData = reader.Parse();
 
             // Init
@@ -82,24 +62,24 @@ namespace PortraitBuilder.Engine
             InvalidateCache();
         }
 
-        public List<DLC> LoadDLCs(Boolean clean)
+        public List<DLC> LoadDLCs(string gameDir, string dlcDir, bool clean = false)
         {
             if (clean)
             {
                 // Cleanup temporary DLC Dir
-                Directory.Delete(user.DlcDir, true);
+                Directory.Delete(dlcDir, true);
             }
-            return LoadDLCs().ToList();
+            return LoadDLCs(gameDir, dlcDir).ToList();
         }
 
-        public IEnumerable<DLC> LoadDLCs()
+        public IEnumerable<DLC> LoadDLCs(string gameDir, string dlcDir)
         {
-            string dlcFolder = Path.Combine(user.GameDir, "DLC");
+            string dlcFolder = Path.Combine(gameDir, "DLC");
             logger.LogInformation("Loading DLCs from " + dlcFolder);
 
-            foreach (DLC dlc in dlcReader.ParseFolder(dlcFolder))
+            foreach (DLC dlc in DLCReader.ParseFolder(dlcFolder))
             {
-                UnzipDLC(dlc);
+                UnzipDLC(dlcDir, dlc);
 
                 logger.LogInformation("Loading portraits from DLC: " + dlc.Name);
                 var reader = new PortraitReader(dlc.AbsolutePath);
@@ -118,10 +98,10 @@ namespace PortraitBuilder.Engine
         /// Unzip DLC, only if tmp folder doesn't already exist
         /// </summary>
         /// <param name="dlcs"></param>
-        private void UnzipDLC(DLC dlc)
+        private void UnzipDLC(string dlcDir, DLC dlc)
         {
             string dlcCode = dlc.DLCFile.Replace(".dlc", "");
-            string newDlcAbsolutePath = Path.Combine(user.DlcDir, dlcCode);
+            string newDlcAbsolutePath = Path.Combine(dlcDir, dlcCode);
             if (!Directory.Exists(newDlcAbsolutePath))
             {
                 logger.LogInformation(string.Format("Extracting {0} to {1}", dlc.Name, newDlcAbsolutePath));
@@ -147,13 +127,13 @@ namespace PortraitBuilder.Engine
             dlc.AbsolutePath = newDlcAbsolutePath;
         }
 
-        public List<Mod> LoadMods()
+        public List<Mod> LoadMods(string modDir)
         {
             List<Mod> mods = new List<Mod>();
-            if (Directory.Exists(user.ModDir))
+            if (Directory.Exists(modDir))
             {
-                logger.LogInformation("Loading mods from " + user.ModDir);
-                mods = modReader.ParseFolder(user.ModDir);
+                logger.LogInformation("Loading mods from " + modDir);
+                mods = ModReader.ParseFolder(modDir);
                 foreach (Mod mod in mods)
                 {
                     if (Directory.Exists(mod.AbsolutePath))
@@ -184,7 +164,7 @@ namespace PortraitBuilder.Engine
             }
             else
             {
-                logger.LogError("Mod directory " + user.ModDir + " doesn't exist");
+                logger.LogError("Mod directory {0} doesn't exist", modDir);
             }
 
             return mods;

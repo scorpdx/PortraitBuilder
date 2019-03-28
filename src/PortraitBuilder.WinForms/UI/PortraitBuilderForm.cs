@@ -33,6 +33,8 @@ namespace PortraitBuilder.UI
 
         private Loader loader;
 
+        private User _user;
+
         private PortraitRenderer portraitRenderer = new PortraitRenderer();
 
         /// <summary>
@@ -90,14 +92,14 @@ namespace PortraitBuilder.UI
 
             initializeTooltip();
 
-            User user = new User();
-            user.GameDir = readGameDir();
-            user.ModDir = readModDir(user.GameDir);
-            user.DlcDir = Path.Combine(Environment.CurrentDirectory, "dlc") + Path.DirectorySeparatorChar;
-            logger.LogInformation("Configuration: " + user);
+            _user = new User();
+            _user.GameDir = readGameDir();
+            _user.ModDir = readModDir(_user.GameDir);
+            _user.DlcDir = Path.Combine(Environment.CurrentDirectory, "dlc/");
+            logger.LogInformation("Configuration: " + _user);
             logger.LogInformation("----------------------------");
 
-            loader = new Loader(user);
+            loader = new Loader();
         }
 
         private void initializeTooltip()
@@ -128,9 +130,9 @@ namespace PortraitBuilder.UI
             logger.LogInformation("----------------------------");
             logger.LogInformation("(Re-)loading data");
 
-            loader.LoadVanilla();
-            loadDLCs(clean);
-            loadMods();
+            loader.LoadVanilla(_user.GameDir);
+            loadDLCs(_user.GameDir, _user.DlcDir, clean);
+            loadMods(_user.ModDir);
 
             loadPortraitTypes();
             fillCharacteristicComboBoxes();
@@ -139,9 +141,9 @@ namespace PortraitBuilder.UI
             drawPortrait();
         }
 
-        private void loadMods()
+        private void loadMods(string modDir)
         {
-            List<Mod> mods = loader.LoadMods();
+            List<Mod> mods = loader.LoadMods(modDir);
             panelMods.Controls.Clear();
 
             foreach (var mod in mods)
@@ -150,9 +152,9 @@ namespace PortraitBuilder.UI
             }
         }
 
-        private void loadDLCs(bool clean)
+        private void loadDLCs(string gameDir, string dlcDir, bool clean)
         {
-            var dlcs = loader.LoadDLCs(clean);
+            var dlcs = loader.LoadDLCs(gameDir, dlcDir, clean);
             panelDLCs.Controls.Clear();
 
             foreach (var dlc in dlcs.Where(d => d.HasPortraitData))

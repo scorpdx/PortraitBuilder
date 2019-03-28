@@ -25,9 +25,9 @@ namespace PortraitBuilder.Online
                 DlcDir = "dlc/"
             };
 
-            var loader = new Loader(user);
-            loader.LoadVanilla();
-            var dlcs = loader.LoadDLCs();
+            var loader = new Loader();
+            loader.LoadVanilla(user.GameDir);
+            var dlcs = loader.LoadDLCs(user.GameDir, user.DlcDir);
             loader.UpdateActiveAdditionalContent(dlcs.Where(dlc => dlc.HasPortraitData).Cast<Content>().ToList());
             loader.LoadPortraits();
 
@@ -83,8 +83,7 @@ namespace PortraitBuilder.Online
             }
 
             var portraitRenderer = new PortraitRenderer();
-            /*using */var cache = new SpriteCache(loader.ActiveContents);
-            var bmp = portraitRenderer.DrawCharacter(character, cache, loader.ActivePortraitData.Sprites);
+            var bmp = portraitRenderer.DrawCharacter(character, loader.Cache, loader.ActivePortraitData.Sprites);
             var png = SKImage.FromBitmap(bmp).Encode();
 
             return new FileStreamResult(png.AsStream(), "image/png");
