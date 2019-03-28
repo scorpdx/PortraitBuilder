@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace PortraitBuilder.Model.Portrait
+namespace PortraitBuilder.Engine
 {
     public class Sprite : IDisposable
     {
