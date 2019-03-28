@@ -174,7 +174,7 @@ namespace PortraitBuilder.Parser
                     switch (id)
                     {
                         case "spriteType":
-                            var sprite = ParseSpriteType(child, filename);
+                            var sprite = ParseSpriteType(child);
                             if (data.Sprites.ContainsKey(sprite.Name))
                             {
                                 logger.LogDebug($"Sprite {sprite.Name} already exists. Replacing.");
@@ -390,44 +390,38 @@ namespace PortraitBuilder.Parser
             return layer;
         }
 
-        private Sprite ParseSpriteType(ASTNode node, string filename)
+        private SpriteDef ParseSpriteType(ASTNode node)
         {
-            Sprite sprite = new Sprite(filename);
+            bool eq(string a, string b) => StringComparer.OrdinalIgnoreCase.Equals(a, b);
 
-            IEnumerable<ASTNode> children = node.Children.Where(child => child.Symbol.Name == "Option");
-            string id, value;
-            ASTNode token;
-            foreach (ASTNode child in children)
+            var tokens = node.Children
+                .Where(child => child.Symbol.Name == "Option")
+                .Select(child => child.Children.First())
+                .Where(token => token.Children.Count > 1)
+                .Select<ASTNode, (string id, string value, string name)>(token => (token.Children[0].Value, token.Children[1].Value, token.Symbol.Name));
+
+            var sprite = new SpriteDef();
+            foreach (var (id, value, name) in tokens)
             {
-                token = child.Children[0];
-
-                if (token.Children.Count > 1 == false)
-                    continue;
-
-                id = token.Children[0].Value;
-                value = token.Children[1].Value;
-
-                switch (token.Symbol.Name)
+                switch (name)
                 {
                     case "stringOption":
                     case "idOption": // Case of unquoted key/value
-                        if (id == "name")
+                        if (eq(id, "name"))
                             sprite.Name = value.Replace("\"", "");
-                        if (id == "texturefile" || id == "textureFile")
+                        else if (eq(id, "textureFile"))
                             sprite.TextureFilePath = value.Replace("\"", "").Replace(@"\\", @"\");
                         break;
-                    case "boolOption":
-                        if (id == "norefcount")
-                            sprite.NoRefCount = value == "yes";
+                    case "boolOption" when eq(id, "norefcount"):
+                        sprite.NoRefCount = value == "yes";
                         break;
-                    case "numberOption":
-                        if (id == "noOfFrames" || id == "noOfframes")
-                            sprite.FrameCount = int.Parse(value);
+                    case "numberOption" when eq(id, "noOfFrames"):
+                        sprite.FrameCount = int.Parse(value);
                         break;
                 }
             }
-            logger.LogDebug("Sprite Parsed: " + sprite);
 
+            logger.LogDebug("SpriteDef Parsed: " + sprite);
             return sprite;
         }
     }

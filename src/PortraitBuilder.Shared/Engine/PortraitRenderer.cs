@@ -40,7 +40,7 @@ namespace PortraitBuilder.Engine
         /// <param name="character">Portrait input to draw.</param>
         /// <param name="activeContents">Content to load sprites from</param>
         /// <returns>Frameless portrait drawn with the given parameters.</returns>
-        public SKBitmap DrawCharacter(Character character, List<Content> activeContents, Dictionary<string, Sprite> sprites)
+        public SKBitmap DrawCharacter(Character character, List<Content> activeContents, Dictionary<string, SpriteDef> sprites)
         {
             logger.LogInformation($"Drawing Portrait {character}");
 
@@ -64,24 +64,23 @@ namespace PortraitBuilder.Engine
             return portraitImage;
         }
 
-        private bool DrawLayer(Layer layer, SKCanvas canvas, Character character, List<Content> activeContents, Dictionary<string, Sprite> sprites)
+        private bool DrawLayer(Layer layer, SKCanvas canvas, Character character, List<Content> activeContents, Dictionary<string, SpriteDef> sprites)
         {
             logger.LogDebug($"Drawing Layer : {layer}");
 
             // Backup for merchants, which are part of "The Republic" DLC !
             string spriteName = GetOverriddenSpriteName(character, layer);
-            if (!sprites.TryGetValue(spriteName, out Sprite sprite) && !sprites.TryGetValue(layer.Name, out sprite))
+            if (!sprites.TryGetValue(spriteName, out SpriteDef def) && !sprites.TryGetValue(layer.Name, out def))
             {
                 logger.LogError("Sprite not found. spriteName: {0}, layerName: {1}", spriteName, layer.Name);
                 return false;
             }
 
-            //Check if loaded; if not, then load
-            if (!sprite.IsLoaded)
-                LoadSprite(sprite, activeContents);
+            //TODO: Check if loaded; if not, then load
+            using var sprite = LoadSprite(def, activeContents);
 
             //Get DNA/Properties letter, then the index of the tile to draw
-            return TryGetTileIndex(character, sprite.FrameCount, layer, out int tileIndex)
+            return TryGetTileIndex(character, def.FrameCount, layer, out int tileIndex)
                 && DrawTile(character, canvas, sprite, layer, tileIndex);
         }
 
@@ -112,21 +111,16 @@ namespace PortraitBuilder.Engine
             return spriteName;
         }
 
-        private void DrawBorder(Character character, SKCanvas canvas, List<Content> activeContents, Dictionary<string, Sprite> sprites)
+        private void DrawBorder(Character character, SKCanvas canvas, List<Content> activeContents, Dictionary<string, SpriteDef> sprites)
         {
             logger.LogDebug("Drawing border.");
             try
             {
                 string governmentSpriteName = "GFX_charframe_150" + GovernmentSpriteSuffix[character.Government];
-                if (sprites.ContainsKey(governmentSpriteName))
+                if (sprites.TryGetValue(governmentSpriteName, out SpriteDef def))
                 {
-                    Sprite sprite = sprites[governmentSpriteName];
-
-                    //Check if loaded; if not, then load
-                    if (!sprite.IsLoaded)
-                    {
-                        LoadSprite(sprite, activeContents);
-                    }
+                    //TODO: Check if loaded; if not, then load
+                    using var sprite = LoadSprite(def, activeContents);
                     canvas.DrawBitmap(sprite.Tiles[(int)character.Rank], SKPoint.Empty);
                 }
             }
@@ -151,10 +145,10 @@ namespace PortraitBuilder.Engine
             return true;
         }
 
-        private void LoadSprite(Sprite sprite, List<Content> activeContents)
+        private Sprite LoadSprite(SpriteDef def, List<Content> activeContents)
         {
             // Paths in vanilla files are Windows-style
-            string filePath = sprite.TextureFilePath.Replace('\\', Path.DirectorySeparatorChar);
+            string filePath = def.TextureFilePath.Replace('\\', Path.DirectorySeparatorChar);
 
             // Also try alternative extension (.tga <=> .dds)
             string extension = filePath.Substring(filePath.Length - 4);
@@ -167,11 +161,11 @@ namespace PortraitBuilder.Engine
             for (int i = activeContents.Count - 1; i >= 0; i--)
             {
                 Content content = activeContents[i];
-                path = content.AbsolutePath + Path.DirectorySeparatorChar + filePath;
+                path = Path.Combine(content.AbsolutePath, filePath);
 
                 if (!File.Exists(path))
                 {
-                    path = content.AbsolutePath + Path.DirectorySeparatorChar + alternativeFilePath;
+                    path = Path.Combine(content.AbsolutePath, alternativeFilePath);
                 }
                 if (File.Exists(path))
                 {
@@ -179,15 +173,11 @@ namespace PortraitBuilder.Engine
                 }
             }
 
-            if (path != null)
-            {
-                logger.LogDebug("Loading sprite from: " + path);
-                sprite.Load(path);
-            }
-            else
-            {
+            if (string.IsNullOrEmpty(path))
                 throw new FileNotFoundException(string.Format("Unable to find file: {0} under active content {1}", filePath, activeContents));
-            }
+
+            logger.LogDebug("Loading sprite from: {0}", path);
+            return new Sprite(path, def.FrameCount);
         }
 
         private bool DrawTile(Character character, SKCanvas canvas, Sprite sprite, Layer layer, int tileIndex)
