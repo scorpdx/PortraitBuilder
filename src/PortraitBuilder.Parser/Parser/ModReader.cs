@@ -7,16 +7,16 @@ using PortraitBuilder.Model.Content;
 namespace PortraitBuilder.Parser
 {
     using static EncodingHelper;
-    public class ModReader
+    public static class ModReader
     {
 
-        private static readonly ILogger logger = LoggingHelper.CreateLogger<ModReader>();
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<Mod>();
 
         /// <summary>
         /// Loads all files in the given folder.
         /// </summary>
         /// <param name="folder">Path to the folder containing the files to load.</param>
-        public List<Mod> ParseFolder(string folder)
+        public static List<Mod> ParseFolder(string folder)
         {
             List<Mod> mods = new List<Mod>();
 
@@ -55,7 +55,7 @@ namespace PortraitBuilder.Parser
             return mods;
         }
 
-        private Mod Parse(string filename)
+        private static Mod Parse(string filename)
         {
             if (!File.Exists(filename))
             {

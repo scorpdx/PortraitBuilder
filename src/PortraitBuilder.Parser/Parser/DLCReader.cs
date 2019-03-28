@@ -9,12 +9,12 @@ using PortraitBuilder.Model.Content;
 namespace PortraitBuilder.Parser
 {
     using static EncodingHelper;
-    public class DLCReader
+    public static class DLCReader
     {
 
         private static readonly ILogger logger = LoggingHelper.CreateLogger<DLC>();
 
-        public IEnumerable<DLC> ParseFolder(string folder)
+        public static IEnumerable<DLC> ParseFolder(string folder)
         {
             DirectoryInfo dir = new DirectoryInfo(folder);
             if (!dir.Exists)
@@ -42,7 +42,7 @@ namespace PortraitBuilder.Parser
             }
         }
 
-        private DLC Parse(string filename)
+        private static DLC Parse(string filename)
         {
             var dlcFile = new FileInfo(filename);
             Debug.Assert(dlcFile.Exists);
