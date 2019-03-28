@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using PortraitBuilder.Model.Portrait;
 
@@ -51,15 +52,5 @@ namespace PortraitBuilder.Model.Content
         /// </summary>
         /// <returns></returns>
         public bool HasPortraitData => PortraitData?.PortraitTypes.Any() == true || Directory.Exists(PortraitPath);
-
-        public void Unload()
-        {
-            PortraitData?.Unload();
-        }
-
-        public void Dispose()
-        {
-            PortraitData?.Dispose();
-        }
     }
 }

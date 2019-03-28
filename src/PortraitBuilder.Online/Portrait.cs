@@ -83,7 +83,8 @@ namespace PortraitBuilder.Online
             }
 
             var portraitRenderer = new PortraitRenderer();
-            var bmp = portraitRenderer.DrawCharacter(character, loader.ActiveContents, loader.ActivePortraitData.Sprites);
+            /*using */var cache = new SpriteCache(loader.ActiveContents);
+            var bmp = portraitRenderer.DrawCharacter(character, cache, loader.ActivePortraitData.Sprites);
             var png = SKImage.FromBitmap(bmp).Encode();
 
             return new FileStreamResult(png.AsStream(), "image/png");

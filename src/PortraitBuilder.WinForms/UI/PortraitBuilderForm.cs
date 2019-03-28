@@ -33,6 +33,8 @@ namespace PortraitBuilder.UI
 
         private Loader loader;
 
+        private SpriteCache _cache;
+
         private PortraitRenderer portraitRenderer = new PortraitRenderer();
 
         /// <summary>
@@ -297,7 +299,13 @@ namespace PortraitBuilder.UI
 
             try
             {
-                var rendered = portraitRenderer.DrawCharacter(character, loader.ActiveContents, loader.ActivePortraitData.Sprites);
+                if(_cache == null || _cache.ActiveContent != loader.ActiveContents)
+                {
+                    _cache?.Dispose();
+                    _cache = new SpriteCache(loader.ActiveContents);
+                }
+
+                var rendered = portraitRenderer.DrawCharacter(character, _cache, loader.ActivePortraitData.Sprites);
                 previewImage = SKImage.FromBitmap(rendered);
             }
             catch (Exception e)
@@ -739,10 +747,6 @@ namespace PortraitBuilder.UI
 
         private void onClickReload(object sender, EventArgs e)
         {
-            foreach (Content content in usableContents.Values)
-            {
-                content.Dispose();
-            }
             usableContents.Clear();
             load(true);
         }

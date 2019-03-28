@@ -40,7 +40,7 @@ namespace PortraitBuilder.Engine
         /// <param name="character">Portrait input to draw.</param>
         /// <param name="activeContents">Content to load sprites from</param>
         /// <returns>Frameless portrait drawn with the given parameters.</returns>
-        public SKBitmap DrawCharacter(Character character, List<Content> activeContents, Dictionary<string, SpriteDef> sprites)
+        public SKBitmap DrawCharacter(Character character, SpriteCache cache, Dictionary<string, SpriteDef> sprites)
         {
             logger.LogInformation($"Drawing Portrait {character}");
 
@@ -53,18 +53,18 @@ namespace PortraitBuilder.Engine
 
                 foreach (var layer in character.PortraitType.Layers)
                 {
-                    if (!DrawLayer(layer, canvas, character, activeContents, sprites))
+                    if (!DrawLayer(layer, canvas, character, cache, sprites))
                     {
                         logger.LogWarning($"Could not render layer {layer}");
                     }
                 }
 
-                DrawBorder(character, canvas, activeContents, sprites);
+                DrawBorder(character, canvas, cache, sprites);
             }
             return portraitImage;
         }
 
-        private bool DrawLayer(Layer layer, SKCanvas canvas, Character character, List<Content> activeContents, Dictionary<string, SpriteDef> sprites)
+        private bool DrawLayer(Layer layer, SKCanvas canvas, Character character, SpriteCache cache, Dictionary<string, SpriteDef> sprites)
         {
             logger.LogDebug($"Drawing Layer : {layer}");
 
@@ -76,8 +76,7 @@ namespace PortraitBuilder.Engine
                 return false;
             }
 
-            //TODO: Check if loaded; if not, then load
-            using var sprite = LoadSprite(def, activeContents);
+            var sprite = cache.Get(def);
 
             //Get DNA/Properties letter, then the index of the tile to draw
             return TryGetTileIndex(character, def.FrameCount, layer, out int tileIndex)
@@ -111,7 +110,7 @@ namespace PortraitBuilder.Engine
             return spriteName;
         }
 
-        private void DrawBorder(Character character, SKCanvas canvas, List<Content> activeContents, Dictionary<string, SpriteDef> sprites)
+        private void DrawBorder(Character character, SKCanvas canvas, SpriteCache cache, Dictionary<string, SpriteDef> sprites)
         {
             logger.LogDebug("Drawing border.");
             try
@@ -119,8 +118,7 @@ namespace PortraitBuilder.Engine
                 string governmentSpriteName = "GFX_charframe_150" + GovernmentSpriteSuffix[character.Government];
                 if (sprites.TryGetValue(governmentSpriteName, out SpriteDef def))
                 {
-                    //TODO: Check if loaded; if not, then load
-                    using var sprite = LoadSprite(def, activeContents);
+                    var sprite = cache.Get(def);
                     canvas.DrawBitmap(sprite.Tiles[(int)character.Rank], SKPoint.Empty);
                 }
             }
@@ -143,41 +141,6 @@ namespace PortraitBuilder.Engine
             logger.LogDebug($"Layer letter: {letter}, Tile Index: {tileIndex}");
 
             return true;
-        }
-
-        private Sprite LoadSprite(SpriteDef def, List<Content> activeContents)
-        {
-            // Paths in vanilla files are Windows-style
-            string filePath = def.TextureFilePath.Replace('\\', Path.DirectorySeparatorChar);
-
-            // Also try alternative extension (.tga <=> .dds)
-            string extension = filePath.Substring(filePath.Length - 4);
-            string alternative = extension == ".dds" ? ".tga" : ".dds";
-            string alternativeFilePath = filePath.Replace(extension, alternative);
-
-            string path = null;
-
-            // Loop on reverse order - last occurence wins if asset is overriden !
-            for (int i = activeContents.Count - 1; i >= 0; i--)
-            {
-                Content content = activeContents[i];
-                path = Path.Combine(content.AbsolutePath, filePath);
-
-                if (!File.Exists(path))
-                {
-                    path = Path.Combine(content.AbsolutePath, alternativeFilePath);
-                }
-                if (File.Exists(path))
-                {
-                    break;
-                }
-            }
-
-            if (string.IsNullOrEmpty(path))
-                throw new FileNotFoundException(string.Format("Unable to find file: {0} under active content {1}", filePath, activeContents));
-
-            logger.LogDebug("Loading sprite from: {0}", path);
-            return new Sprite(path, def.FrameCount);
         }
 
         private bool DrawTile(Character character, SKCanvas canvas, Sprite sprite, Layer layer, int tileIndex)

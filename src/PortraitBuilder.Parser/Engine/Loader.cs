@@ -197,20 +197,10 @@ namespace PortraitBuilder.Engine
         public void DeactivateContent(Content content)
         {
             ActiveContents.Remove(content);
-            content.Unload();
         }
 
         public void UpdateActiveAdditionalContent(IReadOnlyCollection<Content> contents)
         {
-            foreach (var content in ActiveContents)
-            {
-                if (!contents.Contains(content))
-                {
-                    //Unload sprites
-                    content.Unload();
-                }
-            }
-
             ActiveContents.Clear();
             ActiveContents.Add(vanilla);
             ActiveContents.AddRange(contents);
@@ -219,7 +209,6 @@ namespace PortraitBuilder.Engine
         public void RefreshContent(Content content)
         {
             logger.LogInformation("Refreshing content: " + content.Name);
-            content.Unload();
 
             var reader = new PortraitReader(content.AbsolutePath);
             content.PortraitData = reader.Parse();

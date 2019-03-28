@@ -12,13 +12,13 @@ namespace PortraitBuilder.Engine
     {
         private static readonly ILogger logger = LoggingHelper.CreateLogger<SpriteCache>();
 
-        private readonly IReadOnlyList<Content> _activeContent;
+        public IReadOnlyList<Content> ActiveContent { get; }
 
         private ConcurrentDictionary<SpriteDef, Sprite> _sprites;
 
         public SpriteCache(IReadOnlyList<Content> activeContent)
         {
-            _activeContent = activeContent;
+            ActiveContent = activeContent;
             _sprites = new ConcurrentDictionary<SpriteDef, Sprite>();
         }
 
@@ -37,9 +37,9 @@ namespace PortraitBuilder.Engine
             string path = null;
 
             // Loop on reverse order - last occurence wins if asset is overriden !
-            for (int i = _activeContent.Count - 1; i >= 0; i--)
+            for (int i = ActiveContent.Count - 1; i >= 0; i--)
             {
-                var content = _activeContent[i];
+                var content = ActiveContent[i];
                 path = Path.Combine(content.AbsolutePath, filePath);
 
                 if (!File.Exists(path))
@@ -54,7 +54,7 @@ namespace PortraitBuilder.Engine
             }
 
             if (string.IsNullOrEmpty(path))
-                throw new FileNotFoundException(string.Format("Unable to find file: {0} under active content {1}", filePath, activeContent));
+                throw new FileNotFoundException(string.Format("Unable to find file: {0} under active content {1}", filePath, ActiveContent));
 
             logger.LogDebug("Loading sprite from: {0}", path);
             return new Sprite(path, def.FrameCount);

@@ -18,7 +18,7 @@ namespace PortraitBuilder.Model.Portrait
         /// Dictionary of included sprites
         /// Key is the name of the sprite. E.g. GFX_character_background
         /// </summary>
-        public Dictionary<string, Sprite> Sprites = new Dictionary<string, Sprite>();
+        public Dictionary<string, SpriteDef> Sprites = new Dictionary<string, SpriteDef>();
 
         /// <summary>
         /// Dictionary of included Portrait Types.
@@ -33,34 +33,6 @@ namespace PortraitBuilder.Model.Portrait
         /// Note: external offsets (if any) are applied globally during the merging, and not per content.
         /// </summary>
         public Dictionary<string, Point> Offsets = new Dictionary<string, Point>();
-
-        /// <summary>
-        /// Removes all data from memory
-        /// </summary>
-        public void Dispose()
-        {
-            logger.LogInformation("Disposing of previous portrait data.");
-
-            Unload();
-
-            Sprites.Clear();
-            PortraitTypes.Clear();
-            Offsets.Clear();
-        }
-
-        /// <summary>
-        /// Unloads all loaded portrait data.
-        /// </summary>
-        public void Unload()
-        {
-            foreach (KeyValuePair<string, Sprite> pair in Sprites)
-            {
-                if (pair.Value.IsLoaded)
-                {
-                    pair.Value.Unload();
-                }
-            }
-        }
 
         // Last wins implementation
         public void MergeWith(PortraitData other)
@@ -83,23 +55,16 @@ namespace PortraitBuilder.Model.Portrait
             }
             else
             {
-                foreach (Layer layer in portraitType.Layers)
+                foreach (Layer layer in portraitType.Layers.Where(layer => layer.Characteristic == characteristic))
                 {
-                    if (layer.Characteristic == characteristic)
+                    if (Sprites.TryGetValue(layer.Name, out SpriteDef def))
                     {
-                        if (Sprites.ContainsKey(layer.Name))
-                        {
-                            Sprite sprite = Sprites[layer.Name];
-                            if (sprite != null)
-                            {
-                                nbTiles = sprite.FrameCount;
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            logger.LogError("Sprite not found for layer " + layer);
-                        }
+                        nbTiles = def.FrameCount;
+                        break;
+                    }
+                    else
+                    {
+                        logger.LogError("Sprite not found for layer " + layer);
                     }
                 }
             }
