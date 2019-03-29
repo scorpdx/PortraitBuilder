@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SpritePackGenerator": {
+      "commandName": "Project",
+      "commandLineArgs": "\"X:\\Games\\Steam\\steamapps\\common\\Crusader Kings II\" \"C:\\Users\\scorp\\Documents\\Paradox Interactive\\Crusader Kings II\""
+    }
+  }
+}
