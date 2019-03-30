@@ -32,12 +32,15 @@ namespace SpritePackGenerator
             var loader = new Loader();
             Console.WriteLine("Loading vanilla content from {0}", user.GameDir);
             loader.LoadVanilla(user.GameDir);
+            ExtractContent(loader.Vanilla, false);
+            ExtractContentSprites(loader.Vanilla, false);
 
             Console.WriteLine("Loading DLC content from {0}", user.ModDir);
             Console.WriteLine("Saving to {0}", user.DlcDir);
             var activeDlcs = new List<Content>();
             foreach (Content dlc in loader.LoadDLCs(user.GameDir, user.DlcDir))
             {
+                ExtractContent(dlc, true);
                 if (dlc.HasPortraitData)
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
@@ -51,53 +54,71 @@ namespace SpritePackGenerator
 
             foreach (var dlc in activeDlcs)
             {
-                var cache = new SpriteCache(Enumerable.Repeat(dlc, 1));
+                ExtractContentSprites(dlc, true);
+            }
 
-                foreach (var def in dlc.PortraitData.Sprites.Values)
+            Console.WriteLine("Loaded.");
+        }
+
+        private static void ExtractContent(Content content, bool dlc)
+        {
+            var definitionPath = Path.Combine("packs", dlc ? content.AbsolutePath : "vanilla", Path.ChangeExtension(content.Name, ".json"));
+            var definitionFile = new FileInfo(definitionPath);
+            definitionFile.Directory.Create();
+
+            if (definitionFile.Exists)
+                return;
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(content);
+            File.WriteAllText(definitionPath, json);
+        }
+
+        private static void ExtractContentSprites(Content content, bool dlc)
+        {
+            using var cache = new SpriteCache(Enumerable.Repeat(content, 1));
+            foreach (var def in content.PortraitData.Sprites.Values)
+            {
+                Console.WriteLine("Sprite {0}", def.Name);
+                using (var sprite = cache.Get(def))
                 {
-                    Console.WriteLine("Sprite {0}", def.Name);
-                    using (var sprite = cache.Get(def))
+                    var spritePath = Path.Combine("packs", dlc ? content.AbsolutePath : "vanilla", "tiles/", def.Name + "/");
+                    var spriteDir = new DirectoryInfo(spritePath).CreateSubdirectory(".");
+
+                    try
                     {
-                        var spritePath = Path.Combine(dlc.AbsolutePath, Path.GetDirectoryName(def.TextureFilePath), Path.GetFileNameWithoutExtension(def.TextureFilePath), def.Name + "/");
-                        var spriteDir = new DirectoryInfo(spritePath).CreateSubdirectory(".");
-
-                        try
+                        var tiles = sprite.Tiles;
+                        Console.Write("[{0}]", new string(' ', tiles.Count));
+                        Console.Write(new string('\b', tiles.Count + 1));
+                        for (int i = 0; i < tiles.Count; i++)
                         {
-                            var tiles = sprite.Tiles;
-                            Console.Write("[{0}]", new string(' ', tiles.Count));
-                            Console.Write(new string('\b', tiles.Count + 1));
-                            for (int i = 0; i < tiles.Count; i++)
+                            var tile = tiles[i];
+                            var tilePath = Path.Combine(spritePath, $"{i}.png");
+                            if (File.Exists(tilePath))
                             {
-                                Console.Write("*");
-
-                                var tile = tiles[i];
-                                var tilePath = Path.Combine(spritePath, $"{i}.png");
-                                using (var fs = File.Create(tilePath))
-                                using (var pixmap = tile.PeekPixels())
-                                    pixmap.Encode(SkiaSharp.SKPngEncoderOptions.Default).SaveTo(fs);
+                                Console.Write('-');
+                                continue;
                             }
-                            Console.WriteLine("] ok!");
+
+                            using (var fs = File.Create(tilePath))
+                            {
+                                var pixmap = tile.PeekPixels();
+                                pixmap.Encode(SkiaSharp.SKPngEncoderOptions.Default).SaveTo(fs);
+                            }
+
+                            Console.Write('*');
                         }
-                        catch (Exception e) when (e is FileNotFoundException)
-                        {
-                            Console.WriteLine("] fail: texture not found!");
-                        }
+                        Console.WriteLine("] ok!");
+                    }
+                    catch (FileNotFoundException e)
+                    {
+                        Console.WriteLine("[XXXXXXXXXX] fail: texture not found!");
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("[XXXXXXXXXX] fail: {0}!", e.Message);
                     }
                 }
             }
-            //loader.UpdateActiveAdditionalContent(activeDlcs);
-            //loader.LoadPortraits();
-
-            Console.WriteLine("Loaded.");
-            //foreach (var layer in character.PortraitType.Layers)
-            //{
-            //    if (!DrawLayer(layer, canvas, character, cache, sprites))
-            //    {
-            //        logger.LogWarning($"Could not render layer {layer}");
-            //    }
-            //}
-
-            //DrawBorder(character, canvas, cache, sprites);
         }
     }
 }
