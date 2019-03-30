@@ -47,7 +47,7 @@ namespace PortraitBuilder.Model.Portrait
         public string Filename { get; set; }
 
         public IEnumerable<Characteristic> CustomCharacteristics
-            => Layers.Select(l => l.Characteristic).Where(c => c.custom);
+            => Layers.Select(l => l.Characteristic).Where(c => c?.custom ?? false);
 
         public override string ToString()
             => $"Name: {Name}, Layers: {Layers.Count}, HairColours: {HairColours.Count}, EyeColours: {EyeColours.Count}";
