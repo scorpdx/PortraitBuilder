@@ -36,7 +36,7 @@ namespace PortraitBuilder.Engine
         /// <summary>
         /// Vanilla data - never reloaded dynamically
         /// </summary>
-        private Content vanilla;
+        public Content Vanilla { get; private set; }
 
         public PortraitType GetPortraitType(string basePortraitType)
         {
@@ -48,17 +48,17 @@ namespace PortraitBuilder.Engine
 
         public void LoadVanilla(string gameDir)
         {
-            vanilla = new Content();
-            vanilla.Name = "vanilla";
-            vanilla.AbsolutePath = gameDir;
+            Vanilla = new Content();
+            Vanilla.Name = "vanilla";
+            Vanilla.AbsolutePath = gameDir;
 
             logger.LogInformation("Loading portraits from vanilla.");
             var reader = new PortraitReader(gameDir);
-            vanilla.PortraitData = reader.Parse();
+            Vanilla.PortraitData = reader.Parse();
 
             // Init
-            ActivePortraitData = vanilla.PortraitData;
-            ActiveContents.Add(vanilla);
+            ActivePortraitData = Vanilla.PortraitData;
+            ActiveContents.Add(Vanilla);
             InvalidateCache();
         }
 
@@ -188,7 +188,7 @@ namespace PortraitBuilder.Engine
         public void UpdateActiveAdditionalContent(IReadOnlyCollection<Content> contents)
         {
             ActiveContents.Clear();
-            ActiveContents.Add(vanilla);
+            ActiveContents.Add(Vanilla);
             ActiveContents.AddRange(contents);
             InvalidateCache();
         }
@@ -213,7 +213,7 @@ namespace PortraitBuilder.Engine
         {
             ActivePortraitData = new PortraitData();
 
-            ActivePortraitData.MergeWith(vanilla.PortraitData);
+            ActivePortraitData.MergeWith(Vanilla.PortraitData);
             // Recalculate merged portrait data
             foreach (Content content in ActiveContents)
             {
