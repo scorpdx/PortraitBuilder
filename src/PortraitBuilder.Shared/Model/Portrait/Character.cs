@@ -61,21 +61,21 @@ namespace PortraitBuilder.Model.Portrait
 
         public bool TryGetLetter(Characteristic characteristic, out char letter)
         {
-            if (characteristic == Characteristic.HAIR_COLOR)
+            if (characteristic == DefaultCharacteristics.HAIR_COLOR)
             {
                 letter = DNA[PortraitType.HairColourIndex];
             }
-            else if (characteristic == Characteristic.EYE_COLOR)
+            else if (characteristic == DefaultCharacteristics.EYE_COLOR)
             {
                 letter = DNA[PortraitType.EyeColourIndex];
             }
-            else if (characteristic.type == Characteristic.Type.DNA)
+            else if (characteristic.Type == Characteristic.CharacteristicType.DNA)
             {
-                letter = DNA[characteristic.index];
+                letter = DNA[characteristic.Index];
             }
-            else if (characteristic.index < Properties.Length)
+            else if (characteristic.Index < Properties.Length)
             {
-                letter = Properties[characteristic.index];
+                letter = Properties[characteristic.Index];
             }
             else
             {

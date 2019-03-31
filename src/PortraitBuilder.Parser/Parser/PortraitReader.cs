@@ -347,11 +347,11 @@ namespace PortraitBuilder.Parser
             {
                 if (layerParts[i].StartsWith("d"))
                 {
-                    layer.Characteristic = Characteristic.getDna(int.Parse(layerParts[i].Substring(1)));
+                    layer.Characteristic = DefaultCharacteristics.GetDNA(int.Parse(layerParts[i].Substring(1)));
                 }
                 else if (layerParts[i].StartsWith("p"))
                 {
-                    layer.Characteristic = Characteristic.getProperty(int.Parse(layerParts[i].Substring(1)));
+                    layer.Characteristic = DefaultCharacteristics.GetProperty(int.Parse(layerParts[i].Substring(1)));
                 }
                 else if (layerParts[i] == "h" || layerParts[i] == "x")
                 {

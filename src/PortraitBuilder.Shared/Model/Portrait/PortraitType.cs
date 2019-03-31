@@ -21,12 +21,12 @@ namespace PortraitBuilder.Model.Portrait
         /// <summary>
         /// Letter index of the hair colour in the DNA string
         /// </summary>
-        public int HairColourIndex { get; set; } = Characteristic.HAIR_COLOR.index;
+        public int HairColourIndex { get; set; } = DefaultCharacteristics.HAIR_COLOR.Index;
 
         /// <summary>
         /// Letter index of the eye colour in the DNA string
         /// </summary>
-        public int EyeColourIndex { get; set; } = Characteristic.EYE_COLOR.index;
+        public int EyeColourIndex { get; set; } = DefaultCharacteristics.EYE_COLOR.Index;
 
         /// <summary>
         /// List of layers composing the portraitType definition
@@ -47,7 +47,7 @@ namespace PortraitBuilder.Model.Portrait
         public string Filename { get; set; }
 
         public IEnumerable<Characteristic> CustomCharacteristics
-            => Layers.Select(l => l.Characteristic).Where(c => c?.custom ?? false);
+            => Layers.Select(l => l.Characteristic).Where(c => c?.Custom ?? false);
 
         public override string ToString()
             => $"Name: {Name}, Layers: {Layers.Count}, HairColours: {HairColours.Count}, EyeColours: {EyeColours.Count}";

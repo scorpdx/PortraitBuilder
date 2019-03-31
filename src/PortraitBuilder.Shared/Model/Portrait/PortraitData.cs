@@ -5,10 +5,6 @@ using Microsoft.Extensions.Logging;
 
 namespace PortraitBuilder.Model.Portrait
 {
-
-    /// <summary>
-    /// 
-    /// </summary>
     public class PortraitData
     {
 
@@ -45,11 +41,11 @@ namespace PortraitBuilder.Model.Portrait
         public int GetFrameCount(PortraitType portraitType, Characteristic characteristic)
         {
             int nbTiles = 0;
-            if (characteristic == Characteristic.EYE_COLOR)
+            if (characteristic == DefaultCharacteristics.EYE_COLOR)
             {
                 nbTiles = portraitType.EyeColours.Count;
             }
-            else if (characteristic == Characteristic.HAIR_COLOR)
+            else if (characteristic == DefaultCharacteristics.HAIR_COLOR)
             {
                 nbTiles = portraitType.HairColours.Count;
             }

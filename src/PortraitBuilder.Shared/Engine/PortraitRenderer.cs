@@ -19,18 +19,19 @@ namespace PortraitBuilder.Engine
 
         private static readonly ILogger logger = LoggingHelper.CreateLogger<PortraitRenderer>();
 
-        private static IReadOnlyDictionary<GovernmentType, string> GovernmentSpriteSuffix { get; } = new Dictionary<GovernmentType, string>
+        private const string GovernmentSpritePrefix = "GFX_charframe_150";
+        private static IReadOnlyDictionary<GovernmentType, string> GovernmentSpriteNames { get; } = new Dictionary<GovernmentType, string>
         {
-            { GovernmentType.Feudal, "" },
-            { GovernmentType.Iqta, "_iqta"},
-            { GovernmentType.Theocracy, "_theocracy"},
-            { GovernmentType.Republic, "_republic"},
-            { GovernmentType.MerchantRepublic, "_merchantrepublic"},
-            { GovernmentType.Tribal, "_tribal"},
-            { GovernmentType.Nomadic, "_nomadic"},
-            { GovernmentType.MonasticFeudal, "_theocraticfeudal"},
-            { GovernmentType.ChineseImperial, "_chineseimperial" },
-            { GovernmentType.ConfucianBureaucracy, "_confucian" },
+            { GovernmentType.Feudal, GovernmentSpritePrefix },
+            { GovernmentType.Iqta, $"{GovernmentSpritePrefix}_iqta"},
+            { GovernmentType.Theocracy, $"{GovernmentSpritePrefix}_theocracy"},
+            { GovernmentType.Republic, $"{GovernmentSpritePrefix}_republic"},
+            { GovernmentType.MerchantRepublic, $"{GovernmentSpritePrefix}_merchantrepublic"},
+            { GovernmentType.Tribal, $"{GovernmentSpritePrefix}_tribal"},
+            { GovernmentType.Nomadic, $"{GovernmentSpritePrefix}_nomadic"},
+            { GovernmentType.MonasticFeudal, $"{GovernmentSpritePrefix}_theocraticfeudal"},
+            { GovernmentType.ChineseImperial, $"{GovernmentSpritePrefix}_chineseimperial" },
+            { GovernmentType.ConfucianBureaucracy, $"{GovernmentSpritePrefix}_confucian" },
         };
 
         /// <summary>
@@ -96,14 +97,14 @@ namespace PortraitBuilder.Engine
             string spriteName = layer.Name;
 
             var hasSpecialGovernment = character.Government == GovernmentType.Theocracy || character.Government == GovernmentType.MerchantRepublic;
-            var isOutfitLayer = layer.Characteristic == Characteristic.CLOTHES || layer.Characteristic == Characteristic.HEADGEAR;
+            var isOutfitLayer = layer.Characteristic == DefaultCharacteristics.CLOTHES || layer.Characteristic == DefaultCharacteristics.HEADGEAR;
 
             if (hasSpecialGovernment && isOutfitLayer)
             {
                 string sex = character.Sex == Sex.Male ? "male" : "female";
                 string layerSuffix = spriteName.Contains("behind") ? "_behind" : ""; // Handles clothes_infront and headgear_mid
                 string government = character.Government == GovernmentType.Theocracy ? "religious" : "merchant";
-                string layerType = layer.Characteristic == Characteristic.CLOTHES ? "clothes" : "headgear";
+                string layerType = layer.Characteristic == DefaultCharacteristics.CLOTHES ? "clothes" : "headgear";
                 spriteName = $"GFX_{government}_{sex}_{layerType}{layerSuffix}";
             }
 
@@ -115,7 +116,7 @@ namespace PortraitBuilder.Engine
             logger.LogDebug("Drawing border.");
             try
             {
-                string governmentSpriteName = "GFX_charframe_150" + GovernmentSpriteSuffix[character.Government];
+                string governmentSpriteName = GovernmentSpriteNames[character.Government];
                 if (sprites.TryGetValue(governmentSpriteName, out SpriteDef def))
                 {
                     var sprite = cache.Get(def);
@@ -149,9 +150,9 @@ namespace PortraitBuilder.Engine
             if (layer.IsHair)
             {
                 var hairColors = character.PortraitType.HairColours;
-                if (!character.TryGetLetter(Characteristic.HAIR_COLOR, out char hairChar))
+                if (!character.TryGetLetter(DefaultCharacteristics.HAIR_COLOR, out char hairChar))
                 {
-                    logger.LogError("Letter not found. character {0} characteristic {1}", character, Characteristic.HAIR_COLOR);
+                    logger.LogError("Letter not found. character {0} characteristic {1}", character, DefaultCharacteristics.HAIR_COLOR);
                     return false;
                 }
                 int hairIndex = Character.GetIndex(hairChar, hairColors.Count);
@@ -160,9 +161,9 @@ namespace PortraitBuilder.Engine
             else if (layer.IsEye)
             {
                 var eyeColors = character.PortraitType.EyeColours;
-                if (!character.TryGetLetter(Characteristic.EYE_COLOR, out char eyeChar))
+                if (!character.TryGetLetter(DefaultCharacteristics.EYE_COLOR, out char eyeChar))
                 {
-                    logger.LogError("Letter not found. character {0} characteristic {1}", character, Characteristic.EYE_COLOR);
+                    logger.LogError("Letter not found. character {0} characteristic {1}", character, DefaultCharacteristics.EYE_COLOR);
                     return false;
                 }
                 int eyeIndex = Character.GetIndex(eyeChar, eyeColors.Count);

@@ -70,11 +70,11 @@ namespace PortraitBuilder.UI
         {
             InitializeComponent();
 
-            foreach (Characteristic dna in Characteristic.DNA)
+            foreach (var dna in DefaultCharacteristics.DNA)
             {
                 registerCharacteristic(panelDNA, dna);
             }
-            foreach (Characteristic property in Characteristic.PROPERTIES)
+            foreach (var property in DefaultCharacteristics.PROPERTIES)
             {
                 registerCharacteristic(panelProperties, property);
             }
@@ -220,11 +220,11 @@ namespace PortraitBuilder.UI
             container.Controls.Add(combobox);
             container.Controls.Add(randomizable);
 
-            if (characteristic.type == Characteristic.Type.DNA)
+            if (characteristic.Type == Characteristic.CharacteristicType.DNA)
             {
                 dnaComboBoxes.Add(characteristic, combobox);
             }
-            else if (characteristic.custom)
+            else if (characteristic.Custom)
             {
                 customPropertiesComboBoxes.Add(characteristic, combobox);
             }
@@ -543,7 +543,7 @@ namespace PortraitBuilder.UI
             {
                 if (pair.Value != null)
                 {
-                    pair.Value.SelectedIndex = Character.GetIndex(character.DNA[pair.Key.index], pair.Value.Items.Count);
+                    pair.Value.SelectedIndex = Character.GetIndex(character.DNA[pair.Key.Index], pair.Value.Items.Count);
                 }
             }
 
@@ -551,7 +551,7 @@ namespace PortraitBuilder.UI
             {
                 if (pair.Value != null)
                 {
-                    pair.Value.SelectedIndex = Character.GetIndex(character.Properties[pair.Key.index], pair.Value.Items.Count);
+                    pair.Value.SelectedIndex = Character.GetIndex(character.Properties[pair.Key.Index], pair.Value.Items.Count);
                 }
             }
         }
