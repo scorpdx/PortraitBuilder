@@ -1,4 +1,5 @@
-﻿using PortraitBuilder.Engine;
+﻿using PortraitBuilder.ContentPacks;
+using PortraitBuilder.Engine;
 using PortraitBuilder.Model;
 using PortraitBuilder.Model.Content;
 using System;
@@ -62,15 +63,18 @@ namespace SpritePackGenerator
 
         private static void ExtractContent(Content content, bool dlc)
         {
-            var definitionPath = Path.Combine("packs", dlc ? content.AbsolutePath : "vanilla", Path.ChangeExtension(content.Name, ".json"));
-            var definitionFile = new FileInfo(definitionPath);
-            definitionFile.Directory.Create();
+            var definitionPath = Path.Combine("packs", dlc ? content.AbsolutePath : "vanilla");
 
-            if (definitionFile.Exists)
+            var definitionJsonPath = Path.Combine(definitionPath, Path.ChangeExtension(content.Name, ".json"));
+            var jsonFile = new FileInfo(definitionJsonPath);
+            jsonFile.Directory.Create();
+
+            if (jsonFile.Exists)
                 return;
 
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(content);
-            File.WriteAllText(definitionPath, json);
+            content.AbsolutePath = Path.Combine(definitionPath, "tiles/");
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(content, new SkiaConverter());
+            File.WriteAllText(definitionJsonPath, json);
         }
 
         private static void ExtractContentSprites(Content content, bool dlc)
@@ -82,11 +86,13 @@ namespace SpritePackGenerator
                 using (var sprite = cache.Get(def))
                 {
                     var spritePath = Path.Combine("packs", dlc ? content.AbsolutePath : "vanilla", "tiles/", def.Name + "/");
-                    var spriteDir = new DirectoryInfo(spritePath).CreateSubdirectory(".");
-
+                    var spriteDir = new DirectoryInfo(spritePath);
                     try
                     {
                         var tiles = sprite.Tiles;
+                        if (tiles.Any())
+                            spriteDir.Create();
+
                         Console.Write("[{0}]", new string(' ', tiles.Count));
                         Console.Write(new string('\b', tiles.Count + 1));
                         for (int i = 0; i < tiles.Count; i++)
@@ -116,6 +122,11 @@ namespace SpritePackGenerator
                     catch (Exception e)
                     {
                         Console.WriteLine("[XXXXXXXXXX] fail: {0}!", e.Message);
+                    }
+
+                    if(spriteDir.Exists && !spriteDir.EnumerateFiles().Any())
+                    {
+                        spriteDir.Delete();
                     }
                 }
             }

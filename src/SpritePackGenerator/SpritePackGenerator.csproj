@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PortraitBuilder.ContentPacks\PortraitBuilder.ContentPacks.csproj" />
     <ProjectReference Include="..\PortraitBuilder.Parser\PortraitBuilder.Parser.csproj" />
     <ProjectReference Include="..\PortraitBuilder.Shared\PortraitBuilder.Shared.csproj" />
   </ItemGroup>
