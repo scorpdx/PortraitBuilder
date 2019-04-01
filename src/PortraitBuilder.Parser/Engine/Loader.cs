@@ -39,9 +39,7 @@ namespace PortraitBuilder.Engine
         public Content Vanilla { get; private set; }
 
         public PortraitType GetPortraitType(string basePortraitType)
-        {
-            return ActivePortraitData.PortraitTypes[basePortraitType];
-        }
+            => ActivePortraitData.PortraitTypes[basePortraitType];
 
         public PortraitType GetPortraitType(string basePortraitType, string clothingPortraitType)
             => ActivePortraitData.PortraitTypes[basePortraitType].Merge(ActivePortraitData.PortraitTypes[clothingPortraitType]);
