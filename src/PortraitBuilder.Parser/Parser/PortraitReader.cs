@@ -408,9 +408,9 @@ namespace PortraitBuilder.Parser
                     case "stringOption":
                     case "idOption": // Case of unquoted key/value
                         if (eq(id, "name"))
-                            sprite.Name = value.Replace("\"", "");
+                            sprite.Name = value.Trim('"');
                         else if (eq(id, "textureFile"))
-                            sprite.TextureFilePath = value.Replace("\"", "").Replace(@"\\", @"\");
+                            sprite.TextureFilePath = value.Trim('"').Replace(@"\\", "/");
                         break;
                     case "boolOption" when eq(id, "norefcount"):
                         sprite.NoRefCount = value == "yes";
