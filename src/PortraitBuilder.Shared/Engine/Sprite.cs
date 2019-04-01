@@ -54,10 +54,11 @@ namespace PortraitBuilder.Engine
         }
 
         private readonly Lazy<SKBitmap[]> _tiles;
-        public IReadOnlyList<SKBitmap> Tiles => _tiles.Value;
+        public virtual IReadOnlyList<SKBitmap> Tiles => _tiles.Value;
 
         public Sprite(string texturePath, int frameCount)
             => _tiles = new Lazy<SKBitmap[]>(() => frameCount <= 0 ? Array.Empty<SKBitmap>() : Load(texturePath, frameCount));
+        protected Sprite() { }
 
         private SKBitmap[] Load(string texturePath, int frameCount)
         {
