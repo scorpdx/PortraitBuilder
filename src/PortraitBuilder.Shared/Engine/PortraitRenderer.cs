@@ -77,11 +77,9 @@ namespace PortraitBuilder.Engine
                 return false;
             }
 
-            var sprite = cache.Get(def);
-
             //Get DNA/Properties letter, then the index of the tile to draw
             return TryGetTileIndex(character, def.FrameCount, layer, out int tileIndex)
-                && DrawTile(character, canvas, sprite, layer, tileIndex);
+                && DrawTile(character, canvas, cache.Get(def), layer, tileIndex);
         }
 
         /// <summary>
@@ -169,9 +167,14 @@ namespace PortraitBuilder.Engine
                 int eyeIndex = Character.GetIndex(eyeChar, eyeColors.Count);
                 tile = DrawEye(sprite.Tiles[tileIndex], eyeColors[eyeIndex]);
             }
-            else
+            else if (tileIndex < sprite.Tiles.Count)
             {
                 tile = sprite.Tiles[tileIndex];
+            }
+            else
+            {
+                logger.LogError("Tile not found. character {0} sprite {1} tileIndex {2}", character, sprite, tileIndex);
+                return false;
             }
 
             var p = new SKPointI(12 + layer.Offset.X, 12 + 152 - tile.Height - layer.Offset.Y);
