@@ -11,25 +11,34 @@ using SkiaSharp;
 using System.Linq;
 using PortraitBuilder.Model.Content;
 using System;
+using Newtonsoft.Json;
+using PortraitBuilder.ContentPacks;
 
 namespace PortraitBuilder.Online
 {
     public static class PortraitFunction
     {
-        private static readonly Lazy<Loader> _loader = new Lazy<Loader>(() =>
+        private static readonly Lazy<PackLoader> _loader = new Lazy<PackLoader>(() =>
         {
-            var user = new User
-            {
-                GameDir = @"X:\Games\Steam\steamapps\common\Crusader Kings II",//readGameDir();
-                ModDir = @"C:\Users\scorp\Documents\Paradox Interactive\Crusader Kings II",//readModDir(user.GameDir);
-                DlcDir = "dlc/"
-            };
+            var packsPath = @"C:\Dropbox\Data\LocalRepos\scorpdx\PortraitBuilder\src\SpritePackGenerator\bin\Debug\netcoreapp3.0\packs";
+            var packDir = new System.IO.DirectoryInfo(packsPath);
 
-            var loader = new Loader();
-            loader.LoadVanilla(user.GameDir);
-            var dlcs = loader.LoadDLCs(user.GameDir, user.DlcDir);
-            loader.UpdateActiveAdditionalContent(dlcs.Where(dlc => dlc.HasPortraitData).Cast<Content>().ToList());
+            var skiaConv = new SkiaConverter();
+            var packContents = packDir.EnumerateFiles("*.json", System.IO.SearchOption.AllDirectories)
+                .Select(fi => fi.FullName)
+                .Select(System.IO.File.ReadAllText)
+                .Select(json => JsonConvert.DeserializeObject<Content>(json, skiaConv))
+                .ToArray();
+
+            foreach(var pack in packContents)
+            {
+                pack.AbsolutePath = System.IO.Path.Combine(@"C:\Dropbox\Data\LocalRepos\scorpdx\PortraitBuilder\src\SpritePackGenerator\bin\Debug\netcoreapp3.0\", pack.AbsolutePath);
+            }
+
+            var loader = new PackLoader();
+            loader.ActiveContent.AddRange(packContents);
             loader.LoadPortraits();
+            loader.InvalidateCache();
 
             return loader;
         });
@@ -39,7 +48,7 @@ namespace PortraitBuilder.Online
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            LoggingHelper.DefaultLogger = log;
 
             string dna = req.Query["dna"];
             string properties = req.Query["properties"];
@@ -57,12 +66,12 @@ namespace PortraitBuilder.Online
             var character = new Character();
             character.Import(dna, properties);
 
-            if(!string.IsNullOrEmpty(government) && Enum.TryParse(government, true, out GovernmentType gov))
+            if (!string.IsNullOrEmpty(government) && Enum.TryParse(government, true, out GovernmentType gov))
             {
                 character.Government = gov;
             }
 
-            if(!string.IsNullOrEmpty(titleRank) && Enum.TryParse(titleRank, true, out TitleRank rank))
+            if (!string.IsNullOrEmpty(titleRank) && Enum.TryParse(titleRank, true, out TitleRank rank))
             {
                 character.Rank = rank;
             }
