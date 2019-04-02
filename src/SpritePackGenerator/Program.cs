@@ -41,7 +41,6 @@ namespace SpritePackGenerator
             var activeDlcs = new List<Content>();
             foreach (Content dlc in loader.LoadDLCs(user.GameDir, user.DlcDir))
             {
-                ExtractContent(dlc, true);
                 if (dlc.HasPortraitData)
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
@@ -55,6 +54,7 @@ namespace SpritePackGenerator
 
             foreach (var dlc in activeDlcs)
             {
+                ExtractContent(dlc, true);
                 ExtractContentSprites(dlc, true);
             }
 
