@@ -31,7 +31,7 @@ namespace PortraitBuilder.UI
 
         private Boolean nextToogleIsSelectAll = true;
 
-        private Loader loader;
+        private GameLoader loader;
 
         private User _user;
 
@@ -99,7 +99,7 @@ namespace PortraitBuilder.UI
             logger.LogInformation("Configuration: " + _user);
             logger.LogInformation("----------------------------");
 
-            loader = new Loader();
+            loader = new GameLoader();
         }
 
         private void initializeTooltip()

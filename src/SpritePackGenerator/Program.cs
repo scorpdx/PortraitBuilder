@@ -30,7 +30,7 @@ namespace SpritePackGenerator
                 DlcDir = "dlc/"
             };
 
-            var loader = new Loader();
+            var loader = new GameLoader();
             Console.WriteLine("Loading vanilla content from {0}", user.GameDir);
             loader.LoadVanilla(user.GameDir);
             ExtractContent(loader.Vanilla, false);
@@ -115,7 +115,7 @@ namespace SpritePackGenerator
                         }
                         Console.WriteLine("] ok!");
                     }
-                    catch (FileNotFoundException e)
+                    catch (FileNotFoundException)
                     {
                         Console.WriteLine("[XXXXXXXXXX] fail: texture not found!");
                     }
