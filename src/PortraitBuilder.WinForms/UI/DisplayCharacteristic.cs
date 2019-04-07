@@ -5,21 +5,9 @@ using System.Runtime.CompilerServices;
 
 namespace PortraitBuilder.WinForms.UI
 {
-    public class DisplayCharacteristic : INotifyPropertyChanged
+    public class DisplayCharacteristic : Characteristic, INotifyPropertyChanged
     {
-        private readonly Characteristic _characteristic;
-        public DisplayCharacteristic(Characteristic characteristic)
-        {
-            _characteristic = characteristic ?? throw new ArgumentNullException(nameof(characteristic));
-        }
-
-        public string Name => _characteristic.Name;
-
-        public int Index => _characteristic.Index;
-
-        public CharacteristicType Type => _characteristic.Type;
-
-        public bool Custom => _characteristic.Custom;
+        public DisplayCharacteristic(Characteristic c) : base(c.Name, c.Index, c.Type, c.Custom) { }
 
         private bool randomizable;
         /// <summary>
@@ -38,18 +26,9 @@ namespace PortraitBuilder.WinForms.UI
             }
         }
 
-        public override bool Equals(object obj)
-        {
-            return base.Equals(obj);
-        }
-
-        public override string ToString() => _characteristic.ToString();
-
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-
-        public static explicit operator Characteristic(DisplayCharacteristic dc) => dc._characteristic;
     }
 }
