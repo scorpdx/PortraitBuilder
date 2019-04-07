@@ -68,7 +68,7 @@ namespace SpritePackGenerator
                 Console.WriteLine("Generating mergefile...");
 
                 var portraitData = MergePacks();
-                File.WriteAllText("packs/portraits.json", JsonConvert.SerializeObject(portraitData, Formatting.Indented, new SkiaConverter()));
+                File.WriteAllText("packs/portraits.json", JsonConvert.SerializeObject(portraitData, new SkiaConverter()));
 
                 Console.WriteLine("Saved portrait mergefile.");
                 Console.WriteLine("Done");
@@ -94,6 +94,41 @@ namespace SpritePackGenerator
             }
             loader.LoadPortraits();
             loader.InvalidateCache();
+
+            var activeContent = loader.ActiveContent;
+            foreach (var kvp in loader.ActivePortraitData.Sprites)
+            {
+                var def = kvp.Value;
+
+                string originalPath = null;
+                DirectoryInfo dir = null;
+                for (int i = activeContent.Count - 1; i >= 0; i--)
+                {
+                    var content = activeContent[i];
+                    originalPath = Path.Combine(content.AbsolutePath, def.Name).Replace('\\', '/');
+                    dir = new DirectoryInfo(originalPath);
+
+                    if (dir.Exists && dir.EnumerateFiles().Any()) break;
+                }
+
+                if (dir == null || !dir.Exists)
+                {
+                    Console.Error.WriteLine("Unable to find sprite: {0} with {1} active content packs", def.Name, activeContent.Count);
+                    def.TextureFilePath = null;
+                    continue;
+                }
+
+                Debug.Assert(originalPath != null);
+                Console.WriteLine("Resolved pack sprite {0} from: {1}", kvp.Key, originalPath);
+
+                def.TextureFilePath = originalPath;
+            }
+
+            foreach (var badKey in loader.ActivePortraitData.Sprites.Where(kvp => kvp.Value.TextureFilePath == null).Select(kvp => kvp.Key))
+            {
+                loader.ActivePortraitData.Sprites.Remove(badKey);
+                Console.WriteLine("Removed missing sprite {0}", badKey);
+            }
 
             return loader.ActivePortraitData;
         }
