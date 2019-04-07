@@ -28,33 +28,17 @@ namespace PortraitBuilder.Online
             return storage.CreateCloudBlobClient();
         });
 
-        private static readonly Lazy<ValueTask<PortraitData>> _portraitPack = new Lazy<PortraitData>(() =>
+        private static readonly Lazy<Task<PortraitData>> _portraitPack = new Lazy<Task<PortraitData>>(async () =>
         {
             var client = _storageClient.Value;
+
             var container = client.GetContainerReference("packs");
             var blob = container.GetBlockBlobReference("portraits.json");
 
-            var packsPath = @"C:\Dropbox\Data\LocalRepos\scorpdx\PortraitBuilder\src\SpritePackGenerator\bin\Debug\netcoreapp3.0\packs";//Path.Combine("../", "packs/");
-            var packDir = new DirectoryInfo(packsPath);
-
             var skiaConv = new SkiaConverter();
-            var packContents = packDir.EnumerateFiles("*.json", SearchOption.AllDirectories)
-                .Select(fi => fi.FullName)
-                .Select(File.ReadAllText)
-                .Select(json => JsonConvert.DeserializeObject<Content>(json, skiaConv));
+            var json = await blob.DownloadTextAsync();
 
-            var loader = new PackLoader();
-            foreach (var pack in packContents)
-            {
-                pack.AbsolutePath = Path.Combine(@"C:\Dropbox\Data\LocalRepos\scorpdx\PortraitBuilder\src\SpritePackGenerator\bin\Debug\netcoreapp3.0\", pack.AbsolutePath); //Path.Combine("../", pack.AbsolutePath);
-                LoggingHelper.DefaultLogger?.LogInformation("Loaded pack {0}", pack.Name);
-
-                loader.ActiveContent.Add(pack);
-            }
-            loader.LoadPortraits();
-            loader.InvalidateCache();
-
-            return loader;
+            return JsonConvert.DeserializeObject<PortraitData>(json, skiaConv);
         });
 
         [FunctionName("portrait")]
@@ -89,34 +73,45 @@ namespace PortraitBuilder.Online
                 character.Rank = rank;
             }
 
-            var loader = _loader.Value;
-            if (loader.ActivePortraitData.PortraitTypes.Count == 0)
+            var portrait = await _portraitPack.Value;
+            if (!portrait.PortraitTypes.Any())
             {
                 return new StatusCodeResult(500);
             }
 
+            /*
+        public PortraitType GetPortraitType(string basePortraitType)
+            => ActivePortraitData.PortraitTypes[basePortraitType];
+
+        public PortraitType GetPortraitType(string basePortraitType, string clothingPortraitType)
+            => ActivePortraitData.PortraitTypes[basePortraitType].Merge(ActivePortraitData.PortraitTypes[clothingPortraitType]);
+            */
+
+            var basePortraitType = portrait.PortraitTypes[$"PORTRAIT_{ptBase}"];
             if (string.IsNullOrEmpty(ptClothing))
             {
-                character.PortraitType = loader.GetPortraitType($"PORTRAIT_{ptBase}");
+                character.PortraitType = basePortraitType;
             }
             else
             {
-                character.PortraitType = loader.GetPortraitType($"PORTRAIT_{ptBase}", $"PORTRAIT_{ptClothing}");
+                var clothingPortraitType = portrait.PortraitTypes[$"PORTRAIT_{ptClothing}"];
+                character.PortraitType = basePortraitType.Merge(clothingPortraitType);
             }
 
             var portraitBuilder = new PortraitBuilder.Engine.PortraitBuilder();
-            var steps = portraitBuilder.BuildCharacter(character, loader.ActivePortraitData.Sprites)
+            var steps = portraitBuilder.BuildCharacter(character, portrait.Sprites)
                 .Where(s => s != null)
                 .ToArray();
 
-            var sprites = steps.ToDictionary(s => s.Def.Name, s => s.Def);
-            //Microsoft.WindowsAzure.Storage.Blob.blob
+            var sprites = steps.ToLookup(s => s.Def.Name, s => s.Def);
 
-            var portraitRenderer = new PortraitRenderer();
-            var bmp = portraitRenderer.DrawCharacter(character, loader.Cache, loader.ActivePortraitData.Sprites);
-            var png = SKImage.FromBitmap(bmp).Encode();
+            return new JsonResult(new { steps, sprites });
 
-            return new FileStreamResult(png.AsStream(), "image/png");
+            //var portraitRenderer = new PortraitRenderer();
+            //var bmp = portraitRenderer.DrawCharacter(character, loader.Cache, loader.ActivePortraitData.Sprites);
+            //var png = SKImage.FromBitmap(bmp).Encode();
+
+            //return new FileStreamResult(png.AsStream(), "image/png");
         }
     }
 }

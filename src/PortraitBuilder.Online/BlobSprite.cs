@@ -13,6 +13,9 @@ namespace PortraitBuilder.Online
     public class BlobSprite : ISprite
     {
         public BlobSprite()
+        {
+
+        }
 
         public SKBitmap this[int index] => throw new NotImplementedException();
 
