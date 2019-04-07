@@ -151,55 +151,54 @@ namespace SpritePackGenerator
 
         private static void ExtractContentSprites(Content content, bool dlc)
         {
-            using var cache = new SpriteCache(Enumerable.Repeat(content, 1));
+            using var cache = new GameSpriteCache(Enumerable.Repeat(content, 1));
             foreach (var def in content.PortraitData.Sprites.Values)
             {
                 Console.WriteLine("Sprite {0}", def.Name);
-                using (var sprite = cache.Get(def))
+                var spritePath = Path.Combine("packs", dlc ? content.AbsolutePath : "vanilla", "tiles/", def.Name + "/");
+                var spriteDir = new DirectoryInfo(spritePath);
+
+                try
                 {
-                    var spritePath = Path.Combine("packs", dlc ? content.AbsolutePath : "vanilla", "tiles/", def.Name + "/");
-                    var spriteDir = new DirectoryInfo(spritePath);
-                    try
-                    {
-                        var tiles = sprite.Tiles;
-                        if (tiles.Any())
-                            spriteDir.Create();
+                    using var sprite = cache.Get(def);
 
-                        Console.Write("[{0}]", new string(' ', tiles.Count));
-                        Console.Write(new string('\b', tiles.Count + 1));
-                        for (int i = 0; i < tiles.Count; i++)
+                    if (sprite.Any())
+                        spriteDir.Create();
+
+                    Console.Write("[{0}]", new string(' ', sprite.Count));
+                    Console.Write(new string('\b', sprite.Count + 1));
+                    for (int i = 0; i < sprite.Count; i++)
+                    {
+                        var tile = sprite[i];
+                        var tilePath = Path.Combine(spritePath, $"{i}.png");
+                        if (File.Exists(tilePath))
                         {
-                            var tile = tiles[i];
-                            var tilePath = Path.Combine(spritePath, $"{i}.png");
-                            if (File.Exists(tilePath))
-                            {
-                                Console.Write('-');
-                                continue;
-                            }
-
-                            using (var fs = File.Create(tilePath))
-                            {
-                                var pixmap = tile.PeekPixels();
-                                pixmap.Encode(SkiaSharp.SKPngEncoderOptions.Default).SaveTo(fs);
-                            }
-
-                            Console.Write('*');
+                            Console.Write('-');
+                            continue;
                         }
-                        Console.WriteLine("] ok!");
-                    }
-                    catch (FileNotFoundException)
-                    {
-                        Console.WriteLine("[XXXXXXXXXX] fail: texture not found!");
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("[XXXXXXXXXX] fail: {0}!", e.Message);
-                    }
 
-                    if (spriteDir.Exists && !spriteDir.EnumerateFiles().Any())
-                    {
-                        spriteDir.Delete();
+                        using (var fs = File.Create(tilePath))
+                        {
+                            var pixmap = tile.PeekPixels();
+                            pixmap.Encode(SkiaSharp.SKPngEncoderOptions.Default).SaveTo(fs);
+                        }
+
+                        Console.Write('*');
                     }
+                    Console.WriteLine("] ok!");
+                }
+                catch (FileNotFoundException)
+                {
+                    Console.WriteLine("[XXXXXXXXXX] fail: texture not found!");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("[XXXXXXXXXX] fail: {0}!", e.Message);
+                }
+
+                if (spriteDir.Exists && !spriteDir.EnumerateFiles().Any())
+                {
+                    spriteDir.Delete();
                 }
             }
         }

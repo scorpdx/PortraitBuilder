@@ -118,7 +118,7 @@ namespace PortraitBuilder.Engine
                 if (sprites.TryGetValue(governmentSpriteName, out SpriteDef def))
                 {
                     var sprite = cache.Get(def);
-                    canvas.DrawBitmap(sprite.Tiles[(int)character.Rank], SKPoint.Empty);
+                    canvas.DrawBitmap(sprite[(int)character.Rank], SKPoint.Empty);
                 }
             }
             catch (Exception e)
@@ -142,7 +142,7 @@ namespace PortraitBuilder.Engine
             return true;
         }
 
-        private bool DrawTile(Character character, SKCanvas canvas, Sprite sprite, Layer layer, int tileIndex)
+        private bool DrawTile(Character character, SKCanvas canvas, ISprite sprite, Layer layer, int tileIndex)
         {
             SKBitmap tile;
             if (layer.IsHair)
@@ -154,7 +154,7 @@ namespace PortraitBuilder.Engine
                     return false;
                 }
                 int hairIndex = Character.GetIndex(hairChar, hairColors.Count);
-                tile = DrawHair(sprite.Tiles[tileIndex], hairColors[hairIndex]);
+                tile = DrawHair(sprite[tileIndex], hairColors[hairIndex]);
             }
             else if (layer.IsEye)
             {
@@ -165,11 +165,11 @@ namespace PortraitBuilder.Engine
                     return false;
                 }
                 int eyeIndex = Character.GetIndex(eyeChar, eyeColors.Count);
-                tile = DrawEye(sprite.Tiles[tileIndex], eyeColors[eyeIndex]);
+                tile = DrawEye(sprite[tileIndex], eyeColors[eyeIndex]);
             }
-            else if (tileIndex < sprite.Tiles.Count)
+            else if (tileIndex < sprite.Count)
             {
-                tile = sprite.Tiles[tileIndex];
+                tile = sprite[tileIndex];
             }
             else
             {

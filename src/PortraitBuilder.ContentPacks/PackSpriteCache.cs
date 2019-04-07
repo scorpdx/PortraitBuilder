@@ -16,16 +16,18 @@ namespace PortraitBuilder.ContentPacks
 
         public IReadOnlyList<Content> ActiveContent { get; }
 
-        private ConcurrentDictionary<SpriteDef, Sprite> _sprites;
+        private ConcurrentDictionary<SpriteDef, PackSprite> _sprites;
 
         public PackSpriteCache(IEnumerable<Content> activeContent)
         {
             //create a copy
             ActiveContent = new List<Content>(activeContent);
-            _sprites = new ConcurrentDictionary<SpriteDef, Sprite>();
+            _sprites = new ConcurrentDictionary<SpriteDef, PackSprite>();
         }
 
-        public Sprite Get(SpriteDef def) => _sprites?.GetOrAdd(def, LoadSprite) ?? throw new ObjectDisposedException(nameof(PackSpriteCache));
+        public PackSprite Get(SpriteDef def) => _sprites?.GetOrAdd(def, LoadSprite) ?? throw new ObjectDisposedException(nameof(PackSpriteCache));
+
+        ISprite ISpriteCache.Get(SpriteDef def) => Get(def);
 
         private PackSprite LoadSprite(SpriteDef def)
         {
