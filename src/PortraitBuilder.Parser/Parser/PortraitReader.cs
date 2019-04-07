@@ -340,7 +340,6 @@ namespace PortraitBuilder.Parser
             string[] layerParts = node.Value.Replace("\"", "").Split(':');
 
             Layer layer = new Layer();
-            layer.Filename = filename;
             layer.Name = layerParts[0];
 
             for (int i = 1; i < layerParts.Length; i++)
