@@ -1,9 +1,12 @@
-﻿using PortraitBuilder.ContentPacks;
+﻿using Newtonsoft.Json;
+using PortraitBuilder.ContentPacks;
 using PortraitBuilder.Engine;
 using PortraitBuilder.Model;
 using PortraitBuilder.Model.Content;
+using PortraitBuilder.Model.Portrait;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -30,35 +33,101 @@ namespace SpritePackGenerator
                 DlcDir = "dlc/"
             };
 
-            var loader = new GameLoader();
-            Console.WriteLine("Loading vanilla content from {0}", user.GameDir);
-            loader.LoadVanilla(user.GameDir);
-            ExtractContent(loader.Vanilla, false);
-            ExtractContentSprites(loader.Vanilla, false);
-
-            Console.WriteLine("Loading DLC content from {0}", user.ModDir);
-            Console.WriteLine("Saving to {0}", user.DlcDir);
-            var activeDlcs = new List<Content>();
-            foreach (Content dlc in loader.LoadDLCs(user.GameDir, user.DlcDir))
             {
-                if (dlc.HasPortraitData)
+                var loader = new GameLoader();
+                Console.WriteLine("Loading vanilla content from {0}", user.GameDir);
+                loader.LoadVanilla(user.GameDir);
+                ExtractContent(loader.Vanilla, false);
+                //ExtractContentSprites(loader.Vanilla, false);
+
+                Console.WriteLine("Loading DLC content from {0}", user.ModDir);
+                Console.WriteLine("Saving to {0}", user.DlcDir);
+                var activeDlcs = new List<Content>();
+                foreach (Content dlc in loader.LoadDLCs(user.GameDir, user.DlcDir))
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    activeDlcs.Add(dlc);
+                    if (dlc.HasPortraitData)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        activeDlcs.Add(dlc);
+                    }
+                    Console.WriteLine(" [{1,3}]\t{0}", dlc.Name, dlc.PortraitData.Sprites.Count);
+                    Console.ResetColor();
                 }
-                Console.WriteLine(" [{1,3}]\t{0}", dlc.Name, dlc.PortraitData.Sprites.Count);
-                Console.ResetColor();
-            }
-            Console.WriteLine();
-            Console.WriteLine("{0} active DLCs", activeDlcs.Count);
+                Console.WriteLine();
+                Console.WriteLine("{0} active DLCs", activeDlcs.Count);
 
-            foreach (var dlc in activeDlcs)
+                foreach (var dlc in activeDlcs)
+                {
+                    ExtractContent(dlc, true);
+                    //ExtractContentSprites(dlc, true);
+                }
+
+                Console.WriteLine("Extracted packs.");
+            }
             {
-                ExtractContent(dlc, true);
-                ExtractContentSprites(dlc, true);
+                Console.WriteLine("Generating mergefile...");
+
+                (var loader, var sprites) = MergePacks();
+                Console.WriteLine("Mergefile created with {0} content packs.", loader.ActiveContent.Count);
+                Console.WriteLine("Spritefile created with {0} resolved sprites.", sprites.Count);
+
+                File.WriteAllText("packs/content.json", JsonConvert.SerializeObject(loader, Formatting.Indented, new SkiaConverter()));
+                File.WriteAllText("packs/sprites.json", JsonConvert.SerializeObject(sprites, Formatting.Indented));
+            }
+        }
+
+        private static (PackLoader loader, List<SpriteDef> sprites) MergePacks()
+        {
+            var packDir = new DirectoryInfo("packs/");
+
+            var skiaConv = new SkiaConverter();
+            var packContents = packDir.EnumerateFiles("*.json", SearchOption.AllDirectories)
+                .Where(fi => fi.DirectoryName != packDir.FullName.TrimEnd(Path.DirectorySeparatorChar))
+                .Select(fi => fi.FullName)
+                .Select(File.ReadAllText)
+                .Select(json => JsonConvert.DeserializeObject<Content>(json, skiaConv));
+
+            var loader = new PackLoader();
+            foreach (var pack in packContents)
+            {
+                Console.WriteLine("Loaded pack {0}", pack.Name);
+                loader.ActiveContent.Add(pack);
+            }
+            loader.LoadPortraits();
+            loader.InvalidateCache();
+
+            var activeContent = loader.ActiveContent;
+            var merged = new List<SpriteDef>();
+
+            foreach (var kvp in loader.ActivePortraitData.Sprites)
+            {
+                var def = kvp.Value;
+
+                string originalPath = null;
+                DirectoryInfo dir = null;
+                for (int i = activeContent.Count - 1; i >= 0; i--)
+                {
+                    var content = activeContent[i];
+                    originalPath = Path.Combine(content.AbsolutePath, def.Name).Replace('\\', '/');
+                    dir = new DirectoryInfo(originalPath);
+
+                    if (dir.Exists && dir.EnumerateFiles().Any()) break;
+                }
+
+                if (dir == null || !dir.Exists)
+                {
+                    Console.Error.WriteLine("Unable to find sprite: {0} with {1} active content packs", def.Name, activeContent.Count);
+                    continue;
+                }
+
+                Debug.Assert(originalPath != null);
+                Console.WriteLine("Resolved pack sprite {0} from: {1}", kvp.Key, originalPath);
+
+                def.TextureFilePath = originalPath;
+                merged.Add(def);
             }
 
-            Console.WriteLine("Loaded.");
+            return (loader, merged);
         }
 
         private static void ExtractContent(Content content, bool dlc)
@@ -124,7 +193,7 @@ namespace SpritePackGenerator
                         Console.WriteLine("[XXXXXXXXXX] fail: {0}!", e.Message);
                     }
 
-                    if(spriteDir.Exists && !spriteDir.EnumerateFiles().Any())
+                    if (spriteDir.Exists && !spriteDir.EnumerateFiles().Any())
                     {
                         spriteDir.Delete();
                     }
