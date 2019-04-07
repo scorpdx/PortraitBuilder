@@ -1,13 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
 using PortraitBuilder.Model;
 using PortraitBuilder.Model.Portrait;
+using SkiaSharp;
 using System.Collections.Generic;
 
 namespace PortraitBuilder.Engine
 {
-    public class PortraitBuilder
+    public static class PortraitBuilder
     {
-        private static readonly ILogger logger = LoggingHelper.CreateLogger<PortraitRenderer>();
+        private static readonly ILogger logger = LoggingHelper.CreateLogger(nameof(PortraitBuilder));
 
         private const string GovernmentSpritePrefix = "GFX_charframe_150";
         private static IReadOnlyDictionary<GovernmentType, string> GovernmentSpriteNames { get; } = new Dictionary<GovernmentType, string>
@@ -26,9 +27,23 @@ namespace PortraitBuilder.Engine
 
         public class TileRenderStep
         {
-            public SpriteDef Def;
-            public int TileIndex;
-            public SkiaSharp.SKPointI TileOffset;
+            public SpriteDef Def { get; set; }
+            public int TileIndex { get; set; }
+            public SKBitmap? Tile { get; set; }
+
+            private SkiaSharp.SKPointI? tileOffset;
+            //var p = new SKPointI(12 + layer.Offset.X, 12 + 152 - tile.Height - layer.Offset.Y);
+            public SKPointI TileOffset
+            {
+                get
+                {
+                    if (!tileOffset.HasValue)
+                        return SKPointI.Empty;
+
+                    return Tile != null ? SKPointI.Subtract(tileOffset.Value, new SKPointI(0, Tile.Height)) : tileOffset.Value;
+                }
+                set => tileOffset = value;
+            }
         }
 
         public class HairRenderStep : TileRenderStep
@@ -41,7 +56,7 @@ namespace PortraitBuilder.Engine
             public SkiaSharp.SKColor EyeColor;
         }
 
-        public IEnumerable<TileRenderStep> BuildCharacter(Character character, Dictionary<string, SpriteDef> sprites)
+        public static IEnumerable<TileRenderStep> BuildCharacter(Character character, Dictionary<string, SpriteDef> sprites)
         {
             foreach (var layer in character.PortraitType.Layers)
             {
@@ -51,7 +66,7 @@ namespace PortraitBuilder.Engine
             yield return BuildBorder(character, sprites);
         }
 
-        private TileRenderStep? BuildLayer(Layer layer, Character character, Dictionary<string, SpriteDef> sprites)
+        private static TileRenderStep? BuildLayer(Layer layer, Character character, Dictionary<string, SpriteDef> sprites)
         {
             // Backup for merchants, which are part of "The Republic" DLC !
             string spriteName = GetOverriddenSpriteName(character, layer);
@@ -65,7 +80,7 @@ namespace PortraitBuilder.Engine
             return BuildTile(character, layer, def, tileIndex);
         }
 
-        private string GetOverriddenSpriteName(Character character, Layer layer)
+        private static string GetOverriddenSpriteName(Character character, Layer layer)
         {
             string spriteName = layer.Name;
 
@@ -84,7 +99,7 @@ namespace PortraitBuilder.Engine
             return spriteName;
         }
 
-        public TileRenderStep? BuildBorder(Character character, Dictionary<string, SpriteDef> sprites)
+        public static TileRenderStep? BuildBorder(Character character, Dictionary<string, SpriteDef> sprites)
         {
             string governmentSpriteName = GovernmentSpriteNames[character.Government];
             if (!sprites.TryGetValue(governmentSpriteName, out SpriteDef def))
@@ -97,7 +112,7 @@ namespace PortraitBuilder.Engine
             };
         }
 
-        private bool TryGetTileIndex(Character character, int frameCount, Layer layer, out int tileIndex)
+        private static bool TryGetTileIndex(Character character, int frameCount, Layer layer, out int tileIndex)
         {
             tileIndex = default;
             if (!character.TryGetLetter(layer.Characteristic, out char letter))
@@ -112,7 +127,7 @@ namespace PortraitBuilder.Engine
             return true;
         }
 
-        private TileRenderStep? BuildTile(Character character, Layer layer, SpriteDef def, int tileIndex)
+        private static TileRenderStep? BuildTile(Character character, Layer layer, SpriteDef def, int tileIndex)
         {
             var tileOffset = new SkiaSharp.SKPointI(12 + layer.Offset.X, 12 + 152 /*- tile.Height*/ - layer.Offset.Y);
             if (layer.IsHair)

@@ -35,8 +35,6 @@ namespace PortraitBuilder.UI
 
         private User _user;
 
-        private PortraitRenderer portraitRenderer = new PortraitRenderer();
-
         /// <summary>
         /// List of all available DLCs and Mods, indexed by their corresponding checkbox
         /// </summary>
@@ -305,7 +303,15 @@ namespace PortraitBuilder.UI
 
             try
             {
-                var rendered = portraitRenderer.DrawCharacter(character, loader.Cache, loader.ActivePortraitData.Sprites);
+                var steps = PortraitBuilder.Engine.PortraitBuilder.BuildCharacter(character, loader.ActivePortraitData.Sprites)
+                    .Where(step => step != null)
+                    .Select(step =>
+                    {
+                        step.Tile = loader.Cache.Get(step.Def)[step.TileIndex];
+                        return step;
+                    });
+
+                var rendered = PortraitRenderer.DrawPortrait(steps);
                 previewImage = SKImage.FromBitmap(rendered);
             }
             catch (Exception e)
