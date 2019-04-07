@@ -203,7 +203,6 @@ namespace PortraitBuilder.Parser
         private PortraitType ParsePortraitType(ASTNode node, string filename)
         {
             PortraitType portraitType = new PortraitType();
-            portraitType.Filename = filename;
 
             List<ASTNode> children = node.Children.Where(child => child.Symbol.Name == "Option").ToList();
             string id, value;

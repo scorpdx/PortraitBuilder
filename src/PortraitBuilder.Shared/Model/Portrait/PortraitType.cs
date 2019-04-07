@@ -41,11 +41,6 @@ namespace PortraitBuilder.Model.Portrait
         /// </summary>
         public List<int> HeadgearThatHidesHair { get; set; } = new List<int>();
 
-        /// <summary>
-        /// The file that the data was loaded from (E.g portraits.gfx)
-        /// </summary>
-        public string Filename { get; set; }
-
         public IEnumerable<Characteristic> CustomCharacteristics
             => Layers.Select(l => l.Characteristic).Where(c => c?.Custom ?? false);
 
