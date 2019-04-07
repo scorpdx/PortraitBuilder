@@ -67,16 +67,15 @@ namespace SpritePackGenerator
             {
                 Console.WriteLine("Generating mergefile...");
 
-                (var loader, var sprites) = MergePacks();
-                Console.WriteLine("Mergefile created with {0} content packs.", loader.ActiveContent.Count);
-                Console.WriteLine("Spritefile created with {0} resolved sprites.", sprites.Count);
+                var portraitData = MergePacks();
+                File.WriteAllText("packs/portraits.json", JsonConvert.SerializeObject(portraitData, Formatting.Indented, new SkiaConverter()));
 
-                File.WriteAllText("packs/content.json", JsonConvert.SerializeObject(loader, Formatting.Indented, new SkiaConverter()));
-                File.WriteAllText("packs/sprites.json", JsonConvert.SerializeObject(sprites, Formatting.Indented));
+                Console.WriteLine("Saved portrait mergefile.");
+                Console.WriteLine("Done");
             }
         }
 
-        private static (PackLoader loader, List<SpriteDef> sprites) MergePacks()
+        private static PortraitData MergePacks()
         {
             var packDir = new DirectoryInfo("packs/");
 
@@ -96,38 +95,7 @@ namespace SpritePackGenerator
             loader.LoadPortraits();
             loader.InvalidateCache();
 
-            var activeContent = loader.ActiveContent;
-            var merged = new List<SpriteDef>();
-
-            foreach (var kvp in loader.ActivePortraitData.Sprites)
-            {
-                var def = kvp.Value;
-
-                string originalPath = null;
-                DirectoryInfo dir = null;
-                for (int i = activeContent.Count - 1; i >= 0; i--)
-                {
-                    var content = activeContent[i];
-                    originalPath = Path.Combine(content.AbsolutePath, def.Name).Replace('\\', '/');
-                    dir = new DirectoryInfo(originalPath);
-
-                    if (dir.Exists && dir.EnumerateFiles().Any()) break;
-                }
-
-                if (dir == null || !dir.Exists)
-                {
-                    Console.Error.WriteLine("Unable to find sprite: {0} with {1} active content packs", def.Name, activeContent.Count);
-                    continue;
-                }
-
-                Debug.Assert(originalPath != null);
-                Console.WriteLine("Resolved pack sprite {0} from: {1}", kvp.Key, originalPath);
-
-                def.TextureFilePath = originalPath;
-                merged.Add(def);
-            }
-
-            return (loader, merged);
+            return loader.ActivePortraitData;
         }
 
         private static void ExtractContent(Content content, bool dlc)
