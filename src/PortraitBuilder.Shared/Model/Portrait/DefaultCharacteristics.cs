@@ -73,7 +73,7 @@ namespace PortraitBuilder.Model.Portrait
             else
             {
                 // As defines are not parsed, always consider custom properties as valid.
-                return new Characteristic("Custom", index, CharacteristicType.Property, false, true);
+                return new Characteristic("Custom", index, CharacteristicType.Property, custom: true);
             }
         }
 
