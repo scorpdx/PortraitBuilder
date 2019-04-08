@@ -15,6 +15,7 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Buffers;
 
 namespace PortraitBuilder.Online
 {
@@ -39,6 +40,8 @@ namespace PortraitBuilder.Online
 
             return JsonConvert.DeserializeObject<PortraitData>(json, skiaConv);
         });
+
+        private static readonly ConcurrentDictionary<string, Task<SKBitmap>> _blobTileCache = new ConcurrentDictionary<string, Task<SKBitmap>>();
 
         [FunctionName("portrait")]
         public static async Task<IActionResult> Run(
@@ -105,7 +108,7 @@ namespace PortraitBuilder.Online
             string GetBlobPath(SpriteDef def)
                 => def.TextureFilePath.StartsWith("packs/") ? def.TextureFilePath.Substring("packs/".Length) : def.TextureFilePath;
 
-            async Task<SKBitmap> DownloadBlobAsync(string path)
+            async Task<SKBitmap> DownloadBitmapAsync(string path)
             {
                 var blob = container.GetBlockBlobReference(path);
                 using (var stream = await blob.OpenReadAsync())
@@ -120,7 +123,7 @@ namespace PortraitBuilder.Online
                     var tasks = new Task<SKBitmap>[kvp.Key.FrameCount];
                     foreach (var index in kvp.Value)
                     {
-                        tasks[index] = DownloadBlobAsync($"{GetBlobPath(kvp.Key)}/{index}.png");
+                        tasks[index] = _blobTileCache.GetOrAdd($"{GetBlobPath(kvp.Key)}/{index}.png", key => DownloadBitmapAsync(key));
                     }
                     return tasks;
                 });
