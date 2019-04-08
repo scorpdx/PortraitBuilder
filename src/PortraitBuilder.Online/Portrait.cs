@@ -3,19 +3,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using PortraitBuilder.Model.Portrait;
 using PortraitBuilder.Engine;
 using PortraitBuilder.Model;
 using SkiaSharp;
 using System.Linq;
-using PortraitBuilder.Model.Content;
 using System;
 using Newtonsoft.Json;
 using PortraitBuilder.ContentPacks;
-using System.IO;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace PortraitBuilder.Online
 {
@@ -79,14 +78,6 @@ namespace PortraitBuilder.Online
                 return new StatusCodeResult(500);
             }
 
-            /*
-        public PortraitType GetPortraitType(string basePortraitType)
-            => ActivePortraitData.PortraitTypes[basePortraitType];
-
-        public PortraitType GetPortraitType(string basePortraitType, string clothingPortraitType)
-            => ActivePortraitData.PortraitTypes[basePortraitType].Merge(ActivePortraitData.PortraitTypes[clothingPortraitType]);
-            */
-
             var basePortraitType = portrait.PortraitTypes[$"PORTRAIT_{ptBase}"];
             if (string.IsNullOrEmpty(ptClothing))
             {
@@ -98,20 +89,54 @@ namespace PortraitBuilder.Online
                 character.PortraitType = basePortraitType.Merge(clothingPortraitType);
             }
 
-            var portraitBuilder = new PortraitBuilder.Engine.PortraitBuilder();
-            var steps = portraitBuilder.BuildCharacter(character, portrait.Sprites)
+            var steps = PortraitBuilder.Engine.PortraitBuilder.BuildCharacter(character, portrait.Sprites)
                 .Where(s => s != null)
                 .ToArray();
 
-            var sprites = steps.ToLookup(s => s.Def.Name, s => s.Def);
+            var container = _storageClient.Value.GetContainerReference("packs");
 
-            return new JsonResult(new { steps, sprites });
+            var defs = new ConcurrentDictionary<SpriteDef, HashSet<int>>();
+            foreach (var step in steps)
+            {
+                var set = defs.GetOrAdd(step.Def, new HashSet<int>());
+                set.Add(step.TileIndex);
+            }
 
-            //var portraitRenderer = new PortraitRenderer();
-            //var bmp = portraitRenderer.DrawCharacter(character, loader.Cache, loader.ActivePortraitData.Sprites);
-            //var png = SKImage.FromBitmap(bmp).Encode();
+            string GetBlobPath(SpriteDef def)
+                => def.TextureFilePath.StartsWith("packs/") ? def.TextureFilePath.Substring("packs/".Length) : def.TextureFilePath;
 
-            //return new FileStreamResult(png.AsStream(), "image/png");
+            async Task<SKBitmap> DownloadBlobAsync(string path)
+            {
+                var blob = container.GetBlockBlobReference(path);
+                using (var stream = await blob.OpenReadAsync())
+                {
+                    return SKBitmap.Decode(stream);
+                }
+            }
+
+            var bitmapTasks = defs
+                .ToDictionary(kvp => kvp.Key, kvp =>
+                {
+                    var tasks = new Task<SKBitmap>[kvp.Key.FrameCount];
+                    foreach (var index in kvp.Value)
+                    {
+                        tasks[index] = DownloadBlobAsync($"{GetBlobPath(kvp.Key)}/{index}.png");
+                    }
+                    return tasks;
+                });
+
+            foreach(var step in steps)
+            {
+                var bitmapTask = bitmapTasks[step.Def][step.TileIndex];
+                if (bitmapTask == null) continue;
+
+                step.Tile = await bitmapTask;
+            }
+
+            var bmp = PortraitRenderer.DrawPortrait(steps);
+            var png = SKImage.FromBitmap(bmp).Encode();
+
+            return new FileStreamResult(png.AsStream(), "image/png");
         }
     }
 }
