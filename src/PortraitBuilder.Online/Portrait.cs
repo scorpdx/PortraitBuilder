@@ -120,7 +120,7 @@ namespace PortraitBuilder.Online
             var bitmapTasks = defs
                 .ToDictionary(kvp => kvp.Key, kvp =>
                 {
-                    var tasks = new Task<SKBitmap>[kvp.Key.FrameCount];
+                    var tasks = ArrayPool<Task<SKBitmap>>.Shared.Rent(kvp.Key.FrameCount);
                     foreach (var index in kvp.Value)
                     {
                         tasks[index] = _blobTileCache.GetOrAdd($"{GetBlobPath(kvp.Key)}/{index}.png", key => DownloadBitmapAsync(key));
@@ -128,7 +128,7 @@ namespace PortraitBuilder.Online
                     return tasks;
                 });
 
-            foreach(var step in steps)
+            foreach (var step in steps)
             {
                 var bitmapTask = bitmapTasks[step.Def][step.TileIndex];
                 if (bitmapTask == null) continue;
@@ -138,6 +138,11 @@ namespace PortraitBuilder.Online
 
             var bmp = PortraitRenderer.DrawPortrait(steps);
             var png = SKImage.FromBitmap(bmp).Encode();
+
+            foreach (var array in bitmapTasks.Values)
+            {
+                ArrayPool<Task<SKBitmap>>.Shared.Return(array);
+            }
 
             return new FileStreamResult(png.AsStream(), "image/png");
         }
