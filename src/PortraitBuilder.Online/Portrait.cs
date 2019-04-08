@@ -44,7 +44,7 @@ namespace PortraitBuilder.Online
         private static readonly ConcurrentDictionary<string, Task<SKBitmap>> _blobTileCache = new ConcurrentDictionary<string, Task<SKBitmap>>();
 
         [FunctionName("portrait")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> DrawPortrait(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
             //LoggingHelper.DefaultLogger = log;
@@ -145,6 +145,19 @@ namespace PortraitBuilder.Online
             }
 
             return new FileStreamResult(png.AsStream(), "image/png");
+        }
+
+        [FunctionName("portraittypes")]
+        public static async Task<IActionResult> GetPortraitTypes(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+        {
+            var portrait = await _portraitPack.Value;
+            if (!portrait.PortraitTypes.Any())
+            {
+                return new StatusCodeResult(500);
+            }
+
+            return new JsonResult(portrait.PortraitTypes);
         }
     }
 }
