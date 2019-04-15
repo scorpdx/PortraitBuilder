@@ -1,12 +1,13 @@
 using SkiaSharp;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
 namespace PortraitBuilder.Engine
 {
-    public class Sprite : IDisposable
+    public sealed class GameSprite : ISprite
     {
         private static IEnumerable<SKBitmap> LoadTiles(SKBitmap texture, int frameCount)
         {
@@ -31,6 +32,9 @@ namespace PortraitBuilder.Engine
         private static SKBitmap LoadFile(string filepath)
         {
             var image = Pfim.Pfim.FromFile(filepath);
+            if (image.Format != Pfim.ImageFormat.Rgba32 || image.Compressed)
+                throw new InvalidOperationException("Unexpected image format");
+
             Debug.Assert(image.Format == Pfim.ImageFormat.Rgba32);
             Debug.Assert(image.Compressed == false);
 
@@ -40,16 +44,27 @@ namespace PortraitBuilder.Engine
             {
                 fixed (byte* pData = image.Data)
                 {
-                    bmp.InstallPixels(info, (IntPtr)pData, image.Stride);
+                    using (var map = new SKPixmap(info, (IntPtr)pData, image.Stride))
+                    {
+                        if (!bmp.InstallPixels(map))
+                            throw new InvalidOperationException("Failed to load pixmap content");
+                    }
                 }
-                return bmp;
             }
+            return bmp;
         }
 
         private readonly Lazy<SKBitmap[]> _tiles;
-        public IReadOnlyList<SKBitmap> Tiles => _tiles.Value;
 
-        public Sprite(string texturePath, int frameCount) => _tiles = new Lazy<SKBitmap[]>(() => Load(texturePath, frameCount));
+        public int Count { get; }
+
+        public SKBitmap this[int index] => _tiles.Value[index];
+
+        public GameSprite(string texturePath, int frameCount)
+        {
+            Count = frameCount;
+            _tiles = new Lazy<SKBitmap[]>(() => frameCount <= 0 ? Array.Empty<SKBitmap>() : Load(texturePath, frameCount));
+        }
 
         private SKBitmap[] Load(string texturePath, int frameCount)
         {
@@ -59,21 +74,25 @@ namespace PortraitBuilder.Engine
             if (frameCount <= 0)
                 throw new ArgumentException("Invalid frame count", nameof(frameCount));
 
-            using(var texture = LoadFile(texturePath))
+            using (var texture = LoadFile(texturePath))
             {
                 return LoadTiles(texture, frameCount).ToArray();
             }
         }
 
+        public IEnumerator<SKBitmap> GetEnumerator() => ((IEnumerable<SKBitmap>)_tiles.Value).GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => _tiles.Value.GetEnumerator();
+
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
-        protected virtual void Dispose(bool disposing)
+        public void Dispose()
         {
             if (disposedValue)
                 return;
 
-            if (disposing && _tiles.IsValueCreated)
+            if (_tiles.IsValueCreated)
             {
                 foreach (var tile in _tiles.Value)
                 {
@@ -83,8 +102,6 @@ namespace PortraitBuilder.Engine
 
             disposedValue = true;
         }
-
-        public void Dispose() => Dispose(true);
         #endregion
     }
 }

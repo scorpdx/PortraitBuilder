@@ -3,43 +3,51 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using PortraitBuilder.Model.Portrait;
 using PortraitBuilder.Engine;
 using PortraitBuilder.Model;
 using SkiaSharp;
 using System.Linq;
-using PortraitBuilder.Model.Content;
 using System;
+using Newtonsoft.Json;
+using PortraitBuilder.ContentPacks;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Buffers;
 
 namespace PortraitBuilder.Online
 {
     public static class PortraitFunction
     {
-        private static readonly Lazy<Loader> _loader = new Lazy<Loader>(() =>
+        private static readonly Lazy<CloudBlobClient> _storageClient = new Lazy<CloudBlobClient>(() =>
         {
-            var user = new User
-            {
-                GameDir = @"X:\Games\Steam\steamapps\common\Crusader Kings II",//readGameDir();
-                ModDir = @"C:\Users\scorp\Documents\Paradox Interactive\Crusader Kings II",//readModDir(user.GameDir);
-                DlcDir = "dlc/"
-            };
-
-            var loader = new Loader();
-            loader.LoadVanilla(user.GameDir);
-            var dlcs = loader.LoadDLCs(user.GameDir, user.DlcDir);
-            loader.UpdateActiveAdditionalContent(dlcs.Where(dlc => dlc.HasPortraitData).Cast<Content>().ToList());
-            loader.LoadPortraits();
-
-            return loader;
+            string storageConnectionString = Environment.GetEnvironmentVariable("storageconnectionstring");
+            var storage = CloudStorageAccount.Parse(storageConnectionString);
+            return storage.CreateCloudBlobClient();
         });
 
-        [FunctionName("portrait")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-            ILogger log)
+        private static readonly Lazy<Task<PortraitData>> _portraitPack = new Lazy<Task<PortraitData>>(async () =>
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            var client = _storageClient.Value;
+
+            var container = client.GetContainerReference("packs");
+            var blob = container.GetBlockBlobReference("portraits.json");
+
+            var skiaConv = new SkiaConverter();
+            var json = await blob.DownloadTextAsync();
+
+            return JsonConvert.DeserializeObject<PortraitData>(json, skiaConv);
+        });
+
+        private static readonly ConcurrentDictionary<string, Task<SKBitmap>> _blobTileCache = new ConcurrentDictionary<string, Task<SKBitmap>>();
+
+        [FunctionName("portrait")]
+        public static async Task<IActionResult> DrawPortrait(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+        {
+            //LoggingHelper.DefaultLogger = log;
 
             string dna = req.Query["dna"];
             string properties = req.Query["properties"];
@@ -57,36 +65,99 @@ namespace PortraitBuilder.Online
             var character = new Character();
             character.Import(dna, properties);
 
-            if(!string.IsNullOrEmpty(government) && Enum.TryParse(government, true, out GovernmentType gov))
+            if (!string.IsNullOrEmpty(government) && Enum.TryParse(government, true, out GovernmentType gov))
             {
                 character.Government = gov;
             }
 
-            if(!string.IsNullOrEmpty(titleRank) && Enum.TryParse(titleRank, true, out TitleRank rank))
+            if (!string.IsNullOrEmpty(titleRank) && Enum.TryParse(titleRank, true, out TitleRank rank))
             {
                 character.Rank = rank;
             }
 
-            var loader = _loader.Value;
-            if (loader.ActivePortraitData.PortraitTypes.Count == 0)
+            var portrait = await _portraitPack.Value;
+            if (!portrait.PortraitTypes.Any())
             {
                 return new StatusCodeResult(500);
             }
 
+            var basePortraitType = portrait.PortraitTypes[$"PORTRAIT_{ptBase}"];
             if (string.IsNullOrEmpty(ptClothing))
             {
-                character.PortraitType = loader.GetPortraitType($"PORTRAIT_{ptBase}");
+                character.PortraitType = basePortraitType;
             }
             else
             {
-                character.PortraitType = loader.GetPortraitType($"PORTRAIT_{ptBase}", $"PORTRAIT_{ptClothing}");
+                var clothingPortraitType = portrait.PortraitTypes[$"PORTRAIT_{ptClothing}"];
+                character.PortraitType = basePortraitType.Merge(clothingPortraitType);
             }
 
-            var portraitRenderer = new PortraitRenderer();
-            var bmp = portraitRenderer.DrawCharacter(character, loader.Cache, loader.ActivePortraitData.Sprites);
+            var steps = PortraitBuilder.Engine.PortraitBuilder.BuildCharacter(character, portrait.Sprites)
+                .Where(s => s != null)
+                .ToArray();
+
+            var container = _storageClient.Value.GetContainerReference("packs");
+
+            var defs = new ConcurrentDictionary<SpriteDef, HashSet<int>>();
+            foreach (var step in steps)
+            {
+                var set = defs.GetOrAdd(step.Def, new HashSet<int>());
+                set.Add(step.TileIndex);
+            }
+
+            string GetBlobPath(SpriteDef def)
+                => def.TextureFilePath.StartsWith("packs/") ? def.TextureFilePath.Substring("packs/".Length) : def.TextureFilePath;
+
+            async Task<SKBitmap> DownloadBitmapAsync(string path)
+            {
+                var blob = container.GetBlockBlobReference(path);
+                using (var stream = await blob.OpenReadAsync())
+                {
+                    return SKBitmap.Decode(stream);
+                }
+            }
+
+            var bitmapTasks = defs
+                .ToDictionary(kvp => kvp.Key, kvp =>
+                {
+                    var tasks = ArrayPool<Task<SKBitmap>>.Shared.Rent(kvp.Key.FrameCount);
+                    foreach (var index in kvp.Value)
+                    {
+                        tasks[index] = _blobTileCache.GetOrAdd($"{GetBlobPath(kvp.Key)}/{index}.png", key => DownloadBitmapAsync(key));
+                    }
+                    return tasks;
+                });
+
+            foreach (var step in steps)
+            {
+                var bitmapTask = bitmapTasks[step.Def][step.TileIndex];
+                if (bitmapTask == null) continue;
+
+                step.Tile = await bitmapTask;
+            }
+
+            var bmp = PortraitRenderer.DrawPortrait(steps);
             var png = SKImage.FromBitmap(bmp).Encode();
 
+            foreach (var array in bitmapTasks.Values)
+            {
+                ArrayPool<Task<SKBitmap>>.Shared.Return(array);
+            }
+
             return new FileStreamResult(png.AsStream(), "image/png");
+        }
+
+        [FunctionName("portraittypes")]
+        public static async Task<IActionResult> GetPortraitTypes(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+        {
+            var portrait = await _portraitPack.Value;
+            if (!portrait.PortraitTypes.Any())
+            {
+                return new StatusCodeResult(500);
+            }
+
+            return new JsonResult(portrait.PortraitTypes);
         }
     }
 }

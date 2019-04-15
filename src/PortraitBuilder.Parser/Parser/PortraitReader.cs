@@ -203,7 +203,6 @@ namespace PortraitBuilder.Parser
         private PortraitType ParsePortraitType(ASTNode node, string filename)
         {
             PortraitType portraitType = new PortraitType();
-            portraitType.Filename = filename;
 
             List<ASTNode> children = node.Children.Where(child => child.Symbol.Name == "Option").ToList();
             string id, value;
@@ -340,18 +339,17 @@ namespace PortraitBuilder.Parser
             string[] layerParts = node.Value.Replace("\"", "").Split(':');
 
             Layer layer = new Layer();
-            layer.Filename = filename;
             layer.Name = layerParts[0];
 
             for (int i = 1; i < layerParts.Length; i++)
             {
                 if (layerParts[i].StartsWith("d"))
                 {
-                    layer.Characteristic = Characteristic.getDna(int.Parse(layerParts[i].Substring(1)));
+                    layer.Characteristic = DefaultCharacteristics.GetDNA(int.Parse(layerParts[i].Substring(1)));
                 }
                 else if (layerParts[i].StartsWith("p"))
                 {
-                    layer.Characteristic = Characteristic.getProperty(int.Parse(layerParts[i].Substring(1)));
+                    layer.Characteristic = DefaultCharacteristics.GetProperty(int.Parse(layerParts[i].Substring(1)));
                 }
                 else if (layerParts[i] == "h" || layerParts[i] == "x")
                 {
@@ -408,9 +406,9 @@ namespace PortraitBuilder.Parser
                     case "stringOption":
                     case "idOption": // Case of unquoted key/value
                         if (eq(id, "name"))
-                            sprite.Name = value.Replace("\"", "");
+                            sprite.Name = value.Trim('"');
                         else if (eq(id, "textureFile"))
-                            sprite.TextureFilePath = value.Replace("\"", "").Replace(@"\\", @"\");
+                            sprite.TextureFilePath = value.Trim('"').Replace(@"\\", "/");
                         break;
                     case "boolOption" when eq(id, "norefcount"):
                         sprite.NoRefCount = value == "yes";

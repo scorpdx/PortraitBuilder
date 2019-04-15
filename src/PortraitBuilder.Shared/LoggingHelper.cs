@@ -17,10 +17,10 @@ namespace PortraitBuilder
             public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter) { }
         }
 
-        private static readonly Lazy<DummyLogger> dummy = new Lazy<DummyLogger>();
-
+        
+        public static ILogger DefaultLogger { get; set; } = new DummyLogger();
         public static ILoggerFactory LoggerFactory { get; set; }
-        public static ILogger CreateLogger<T>() => (ILogger)LoggerFactory?.CreateLogger<T>() ?? dummy.Value;
-        public static ILogger CreateLogger(string categoryName) => LoggerFactory?.CreateLogger(categoryName) ?? dummy.Value;
+        public static ILogger CreateLogger<T>() => LoggerFactory?.CreateLogger<T>() ?? DefaultLogger;
+        public static ILogger CreateLogger(string categoryName) => LoggerFactory?.CreateLogger(categoryName) ?? DefaultLogger;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using PortraitBuilder.Model.Content;
 
@@ -23,11 +24,10 @@ namespace PortraitBuilder.Parser
             DirectoryInfo dir = new DirectoryInfo(folder);
             if (dir.Exists)
             {
-                FileInfo[] modFiles = dir.GetFiles("*.mod");
-
-                if (modFiles.Length == 0)
+                var modFiles = dir.EnumerateFiles("*.mod");
+                if (!modFiles.Any())
                 {
-                    logger.LogWarning(string.Format("No mods found in folder: {0}", dir.FullName));
+                    logger.LogWarning("No mods found in folder: {0}", dir.FullName);
                 }
 
                 foreach (FileInfo modFile in modFiles)
@@ -35,9 +35,9 @@ namespace PortraitBuilder.Parser
                     try
                     {
                         Mod mod = Parse(modFile.FullName);
-                        if (mod != null && mod.Path != null)
+                        if (mod?.ModPath != null)
                         {
-                            mod.AbsolutePath = Path.Combine(folder, mod.Path.Substring("mod".Length + 1)); // Remove "mod/" from path
+                            mod.AbsolutePath = Path.Combine(folder, mod.ModPath.Substring("mod".Length + 1)); // Remove "mod/" from path
                             mods.Add(mod);
                         }
                     }
@@ -77,7 +77,7 @@ namespace PortraitBuilder.Parser
                 if (line.StartsWith("name"))
                     mod.Name = line.Split('=')[1].Split('#')[0].Replace("\"", "").Trim();
                 if (line.StartsWith("path") || line.StartsWith("archive"))
-                    mod.Path = line.Split('=')[1].Split('#')[0].Replace("\"", "").Trim();
+                    mod.ModPath = line.Split('=')[1].Split('#')[0].Replace("\"", "").Trim();
                 if (line.StartsWith("user_dir") || line.StartsWith("archive"))
                     mod.UserDir = line.Split('=')[1].Split('#')[0].Replace("\"", "").Trim();
 

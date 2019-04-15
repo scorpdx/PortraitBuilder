@@ -16,49 +16,29 @@ namespace PortraitBuilder.Engine
     /// <summary>
     /// Loads content based on hierachical override: vanilla -> DLC -> mod -> dependent mod
     /// </summary>
-    public class Loader
+    public class GameLoader : Loader
     {
 
-        private static readonly ILogger logger = LoggingHelper.CreateLogger<Loader>();
-
-        /// <summary>
-        /// DLCs or Mods that are checked
-        /// </summary>
-        public List<Content> ActiveContents { get; } = new List<Content>();
-
-        public SpriteCache Cache { get; private set; }
-
-        /// <summary>
-        /// Merged portraitData of all active content.
-        /// </summary>
-        public PortraitData ActivePortraitData { get; private set; } = new PortraitData();
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<GameLoader>();
 
         /// <summary>
         /// Vanilla data - never reloaded dynamically
         /// </summary>
-        private Content vanilla;
-
-        public PortraitType GetPortraitType(string basePortraitType)
-        {
-            return ActivePortraitData.PortraitTypes[basePortraitType];
-        }
-
-        public PortraitType GetPortraitType(string basePortraitType, string clothingPortraitType)
-            => ActivePortraitData.PortraitTypes[basePortraitType].Merge(ActivePortraitData.PortraitTypes[clothingPortraitType]);
+        public Content Vanilla { get; private set; }
 
         public void LoadVanilla(string gameDir)
         {
-            vanilla = new Content();
-            vanilla.Name = "vanilla";
-            vanilla.AbsolutePath = gameDir;
+            Vanilla = new Content();
+            Vanilla.Name = "vanilla";
+            Vanilla.AbsolutePath = gameDir;
 
             logger.LogInformation("Loading portraits from vanilla.");
             var reader = new PortraitReader(gameDir);
-            vanilla.PortraitData = reader.Parse();
+            Vanilla.PortraitData = reader.Parse();
 
             // Init
-            ActivePortraitData = vanilla.PortraitData;
-            ActiveContents.Add(vanilla);
+            ActivePortraitData = Vanilla.PortraitData;
+            ActiveContent.Add(Vanilla);
             InvalidateCache();
         }
 
@@ -173,7 +153,7 @@ namespace PortraitBuilder.Engine
         public void ActivateContent(Content content)
         {
             // TODO load order
-            ActiveContents.Add(content);
+            ActiveContent.Add(content);
             InvalidateCache();
 
             RefreshContent(content);
@@ -181,22 +161,26 @@ namespace PortraitBuilder.Engine
 
         public void DeactivateContent(Content content)
         {
-            ActiveContents.Remove(content);
+            ActiveContent.Remove(content);
             InvalidateCache();
         }
 
         public void UpdateActiveAdditionalContent(IReadOnlyCollection<Content> contents)
         {
-            ActiveContents.Clear();
-            ActiveContents.Add(vanilla);
-            ActiveContents.AddRange(contents);
+            ActiveContent.Clear();
+            ActiveContent.Add(Vanilla);
+            foreach(var content in contents)
+            {
+                ActiveContent.Add(content);
+            }
             InvalidateCache();
         }
 
-        private void InvalidateCache()
+        public override void InvalidateCache()
         {
-            Cache?.Dispose();
-            Cache = new SpriteCache(ActiveContents);
+            var oldcache = Cache;
+            Cache = new GameSpriteCache(ActiveContent);
+            oldcache?.Dispose();
         }
 
         public void RefreshContent(Content content)
@@ -207,32 +191,6 @@ namespace PortraitBuilder.Engine
             content.PortraitData = reader.Parse();
 
             LoadPortraits();
-        }
-
-        private void MergePortraitData()
-        {
-            ActivePortraitData = new PortraitData();
-
-            ActivePortraitData.MergeWith(vanilla.PortraitData);
-            // Recalculate merged portrait data
-            foreach (Content content in ActiveContents)
-            {
-                ActivePortraitData.MergeWith(content.PortraitData);
-            }
-        }
-
-        public void LoadPortraits()
-        {
-            MergePortraitData();
-
-            // Apply external offsets
-            var allLayers = ActivePortraitData.PortraitTypes.Values
-                .SelectMany(pt => pt.Layers.Where(layer => ActivePortraitData.Offsets.ContainsKey(layer.Name)));
-            foreach (var layer in allLayers)
-            {
-                layer.Offset = ActivePortraitData.Offsets[layer.Name];
-                logger.LogDebug("Overriding offset of layer {0} to {1}", layer.Name, layer.Offset);
-            }
         }
     }
 }

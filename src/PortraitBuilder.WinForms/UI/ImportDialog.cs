@@ -35,11 +35,11 @@ namespace PortraitBuilder.UI
 
             if (tb == tbDNA)
             {
-                isDNAValid = Validate(tb, Characteristic.DNA.Length);
+                isDNAValid = Validate(tb, DefaultCharacteristics.DNA.Length);
             }
             else if (tb == tbProperties)
             {
-                isPropertiesValid = Validate(tb, Characteristic.PROPERTIES.Length);
+                isPropertiesValid = Validate(tb, DefaultCharacteristics.PROPERTIES.Length);
             }
 
             if (isDNAValid && isPropertiesValid)
