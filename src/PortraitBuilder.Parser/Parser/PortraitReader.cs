@@ -203,7 +203,6 @@ namespace PortraitBuilder.Parser
         private PortraitType ParsePortraitType(ASTNode node, string filename)
         {
             PortraitType portraitType = new PortraitType();
-            portraitType.Filename = filename;
 
             List<ASTNode> children = node.Children.Where(child => child.Symbol.Name == "Option").ToList();
             string id, value;
@@ -340,7 +339,6 @@ namespace PortraitBuilder.Parser
             string[] layerParts = node.Value.Replace("\"", "").Split(':');
 
             Layer layer = new Layer();
-            layer.Filename = filename;
             layer.Name = layerParts[0];
 
             for (int i = 1; i < layerParts.Length; i++)

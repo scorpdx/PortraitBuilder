@@ -39,7 +39,6 @@ namespace PortraitBuilder.Model.Portrait
                         {
                             Characteristic = baseLayer.Characteristic,
                             CultureIndex = baseLayer.CultureIndex,
-                            Filename = overrideLayer.Filename,
                             IsEye = baseLayer.IsEye,
                             IsHair = baseLayer.IsHair,
                             Name = overrideLayer.Name,

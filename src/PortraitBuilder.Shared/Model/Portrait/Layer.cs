@@ -57,11 +57,6 @@ namespace PortraitBuilder.Model.Portrait
         /// </summary>
         public Point Offset = new Point(0, 0);
 
-        /// <summary>
-        /// The file that the data was loaded from.
-        /// </summary>
-        public string Filename;
-
-        public override string ToString() => $"{Name}:{Characteristic} from {Filename}";
+        public override string ToString() => $"{Name}:{Characteristic}";
     }
 }

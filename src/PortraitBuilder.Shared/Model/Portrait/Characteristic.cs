@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace PortraitBuilder.Model.Portrait
 {
@@ -7,15 +9,14 @@ namespace PortraitBuilder.Model.Portrait
     /// <summary>
     /// Represents one DNA or Property element
     /// </summary>
-    public class Characteristic : INotifyPropertyChanged
+    public class Characteristic : IEquatable<Characteristic>, INotifyPropertyChanged
     {
-
-        public Characteristic(string name, int index, CharacteristicType type, bool randomizable, bool custom = false)
+        public Characteristic(string name, int index, CharacteristicType type, bool randomizable = false, bool custom = false)
         {
             this.Name = name;
             this.Index = index;
             this.Type = type;
-            this.randomizable = randomizable;
+            this.Randomizable = randomizable;
             this.Custom = custom;
         }
 
@@ -28,18 +29,20 @@ namespace PortraitBuilder.Model.Portrait
 
         public CharacteristicType Type { get; }
 
+        private bool randomizable;
         /// <summary>
         /// Whether the characteristic should be randomized when generating a random portrait.
         /// </summary>
-        private bool randomizable;
-
         public bool Randomizable
         {
-            get { return randomizable; }
-            private set
+            get => randomizable;
+            set
             {
-                randomizable = value;
-                InvokePropertyChanged(new PropertyChangedEventArgs(nameof(Randomizable)));
+                if (value != randomizable)
+                {
+                    randomizable = value;
+                    NotifyPropertyChanged();
+                }
             }
         }
 
@@ -48,25 +51,36 @@ namespace PortraitBuilder.Model.Portrait
         /// </summary>
         public bool Custom { get; }
 
-        public enum CharacteristicType
+        public bool Equals(Characteristic other)
         {
-            DNA,
-            Property
+            return other != null
+                && Name == other.Name
+                && Index == other.Index
+                && Type == other.Type
+                && Custom == other.Custom;
         }
 
-        public override bool Equals(object obj)
-            => !(obj is Characteristic characteristic) ? false : Index.Equals(characteristic.Index) && Type.Equals(characteristic.Type);
+        public override int GetHashCode()
+        {
+            var hashCode = 1047414484;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Name);
+            hashCode = hashCode * -1521134295 + Index.GetHashCode();
+            hashCode = hashCode * -1521134295 + Type.GetHashCode();
+            hashCode = hashCode * -1521134295 + Custom.GetHashCode();
+            return hashCode;
+        }
 
-        public override int GetHashCode() => Type.GetHashCode() + Index;
+        public override bool Equals(object obj) => Equals(obj as Characteristic);
 
         public override string ToString() => $"{Name} ({(Type == CharacteristicType.DNA ? 'd' : 'p')}{Index})";
 
-        #region Implementation of INotifyPropertyChanged
+        public static bool operator ==(Characteristic left, Characteristic right) => EqualityComparer<Characteristic>.Default.Equals(left, right);
+
+        public static bool operator !=(Characteristic left, Characteristic right) => !(left == right);
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void InvokePropertyChanged(PropertyChangedEventArgs e) => PropertyChanged?.Invoke(this, e);
-
-        #endregion
+        private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

@@ -69,7 +69,7 @@ namespace PortraitBuilder.Model.Portrait
             {
                 letter = DNA[PortraitType.EyeColourIndex];
             }
-            else if (characteristic.Type == Characteristic.CharacteristicType.DNA)
+            else if (characteristic.Type == CharacteristicType.DNA)
             {
                 letter = DNA[characteristic.Index];
             }

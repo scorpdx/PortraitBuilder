@@ -5,6 +5,10 @@
     <RootNamespace>PortraitBuilder</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Remove="Parser\PortraitReaderLexer.bin" />
     <None Remove="Parser\PortraitReaderParser.bin" />

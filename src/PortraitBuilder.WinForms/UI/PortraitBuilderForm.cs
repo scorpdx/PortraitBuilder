@@ -35,8 +35,6 @@ namespace PortraitBuilder.UI
 
         private User _user;
 
-        private PortraitRenderer portraitRenderer = new PortraitRenderer();
-
         /// <summary>
         /// List of all available DLCs and Mods, indexed by their corresponding checkbox
         /// </summary>
@@ -72,11 +70,11 @@ namespace PortraitBuilder.UI
 
             foreach (var dna in DefaultCharacteristics.DNA)
             {
-                registerCharacteristic(panelDNA, dna);
+                registerDisplayCharacteristic(panelDNA, dna);
             }
             foreach (var property in DefaultCharacteristics.PROPERTIES)
             {
-                registerCharacteristic(panelProperties, property);
+                registerDisplayCharacteristic(panelProperties, property);
             }
 
             initializeForm();
@@ -135,8 +133,8 @@ namespace PortraitBuilder.UI
             loadMods(_user.ModDir);
 
             loadPortraitTypes();
-            fillCharacteristicComboBoxes();
-            randomizeCharacteristics(true);
+            fillDisplayCharacteristicComboBoxes();
+            randomizeDisplayCharacteristics(true);
 
             drawPortrait();
         }
@@ -197,30 +195,36 @@ namespace PortraitBuilder.UI
             }
         }
 
-        private void registerCharacteristic(Control container, Characteristic characteristic)
+        private void registerDisplayCharacteristic(Control container, Characteristic characteristic)
         {
-            ComboBox combobox = new ComboBox();
-            combobox.Width = 90;
-            combobox.Padding = new Padding(0);
-            combobox.Margin = new Padding(0);
-            combobox.SelectedValueChanged += this.onChangeCharacteristic;
+            ComboBox combobox = new ComboBox
+            {
+                Width = 90,
+                Padding = new Padding(0),
+                Margin = new Padding(0)
+            };
+            combobox.SelectedValueChanged += this.onChangeDisplayCharacteristic;
 
-            Label label = new Label();
-            label.Text = characteristic.ToString() + ":";
-            label.Width = 90;
-            label.TextAlign = ContentAlignment.MiddleRight;
+            Label label = new Label
+            {
+                Text = $"{characteristic}:",
+                Width = 90,
+                TextAlign = ContentAlignment.MiddleRight
+            };
 
-            CheckBox randomizable = new CheckBox();
-            randomizable.Width = 20;
-            randomizable.Padding = new Padding(5, 0, 0, 0);
+            CheckBox randomizable = new CheckBox
+            {
+                Width = 20,
+                Padding = new Padding(5, 0, 0, 0)
+            };
             randomizable.DataBindings.Add("Checked", characteristic, "Randomizable");
-            toolTip.SetToolTip(randomizable, "Use this characteristic when randomizing");
+            toolTip.SetToolTip(randomizable, "Use this DisplayCharacteristic when randomizing");
 
             container.Controls.Add(label);
             container.Controls.Add(combobox);
             container.Controls.Add(randomizable);
 
-            if (characteristic.Type == Characteristic.CharacteristicType.DNA)
+            if (characteristic.Type == CharacteristicType.DNA)
             {
                 dnaComboBoxes.Add(characteristic, combobox);
             }
@@ -299,7 +303,15 @@ namespace PortraitBuilder.UI
 
             try
             {
-                var rendered = portraitRenderer.DrawCharacter(character, loader.Cache, loader.ActivePortraitData.Sprites);
+                var steps = PortraitBuilder.Engine.PortraitBuilder.BuildCharacter(character, loader.ActivePortraitData.Sprites)
+                    .Where(step => step != null)
+                    .Select(step =>
+                    {
+                        step.Tile = loader.Cache.Get(step.Def)[step.TileIndex];
+                        return step;
+                    });
+
+                var rendered = PortraitRenderer.DrawPortrait(steps);
                 previewImage = SKImage.FromBitmap(rendered);
             }
             catch (Exception e)
@@ -311,7 +323,7 @@ namespace PortraitBuilder.UI
             pbPortrait.Image = Image.FromStream(previewImage.Encode().AsStream(true));
         }
 
-        private string getCharacteristicsString(Dictionary<Characteristic, ComboBox> characteristics)
+        private string getDisplayCharacteristicsString(Dictionary<Characteristic, ComboBox> characteristics)
         {
             StringBuilder sb = new StringBuilder();
             foreach (ComboBox cb in characteristics.Values)
@@ -348,7 +360,7 @@ namespace PortraitBuilder.UI
         /// Some very specific characristics are not randomized: scars, red dots, boils, prisoner, blinded.
         /// </summary>
         /// <param name="doRank"></param>
-        private void randomizeCharacteristics(bool doRank)
+        private void randomizeDisplayCharacteristics(bool doRank)
         {
             logger.LogDebug("Randomizing UI");
             if (doRank)
@@ -357,21 +369,18 @@ namespace PortraitBuilder.UI
                 randomizeComboBox(cbRank);
             }
 
-            randomizeCharacteristics(dnaComboBoxes);
-            randomizeCharacteristics(propertiesComboBoxes);
-            randomizeCharacteristics(customPropertiesComboBoxes);
+            randomizeDisplayCharacteristics(dnaComboBoxes);
+            randomizeDisplayCharacteristics(propertiesComboBoxes);
+            randomizeDisplayCharacteristics(customPropertiesComboBoxes);
 
-            updatePortrait(getCharacteristicsString(dnaComboBoxes), getCharacteristicsString(propertiesComboBoxes), getCharacteristicsString(customPropertiesComboBoxes));
+            updatePortrait(getDisplayCharacteristicsString(dnaComboBoxes), getDisplayCharacteristicsString(propertiesComboBoxes), getDisplayCharacteristicsString(customPropertiesComboBoxes));
         }
 
-        private void randomizeCharacteristics(Dictionary<Characteristic, ComboBox> cbs)
+        private void randomizeDisplayCharacteristics(Dictionary<Characteristic, ComboBox> cbs)
         {
-            foreach (KeyValuePair<Characteristic, ComboBox> pair in cbs)
+            foreach (var pair in cbs.Where(kvp => kvp.Key.Randomizable))
             {
-                if (pair.Key.Randomizable)
-                {
-                    randomizeComboBox(pair.Value);
-                }
+                randomizeComboBox(pair.Value);
             }
         }
 
@@ -441,22 +450,18 @@ namespace PortraitBuilder.UI
             return selectedPortraitType;
         }
 
-        private void fillCharacteristicComboBoxes()
+        private void fillDisplayCharacteristicComboBoxes()
         {
-            fillCharacteristicComboBoxes(dnaComboBoxes);
-            fillCharacteristicComboBoxes(propertiesComboBoxes);
-            fillCharacteristicComboBoxes(customPropertiesComboBoxes);
+            fillDisplayCharacteristicComboBoxes(dnaComboBoxes);
+            fillDisplayCharacteristicComboBoxes(propertiesComboBoxes);
+            fillDisplayCharacteristicComboBoxes(customPropertiesComboBoxes);
         }
 
-        private void fillCharacteristicComboBoxes(Dictionary<Characteristic, ComboBox> cbs)
+        private void fillDisplayCharacteristicComboBoxes(Dictionary<Characteristic, ComboBox> cbs)
         {
-            foreach (KeyValuePair<Characteristic, ComboBox> pair in cbs)
+            foreach (var pair in cbs.Where(kvp => kvp.Value != null))
             {
-                ComboBox cb = pair.Value;
-                if (cb != null)
-                {
-                    fillComboBox(cb, pair.Key);
-                }
+                fillComboBox(pair.Value, pair.Key);
             }
         }
 
@@ -537,22 +542,16 @@ namespace PortraitBuilder.UI
             return selectedContent;
         }
 
-        private void updateSelectedCharacteristicValues(Character character)
+        private void updateSelectedDisplayCharacteristicValues(Character character)
         {
-            foreach (KeyValuePair<Characteristic, ComboBox> pair in dnaComboBoxes)
+            foreach (var pair in dnaComboBoxes.Where(kvp => kvp.Value != null))
             {
-                if (pair.Value != null)
-                {
-                    pair.Value.SelectedIndex = Character.GetIndex(character.DNA[pair.Key.Index], pair.Value.Items.Count);
-                }
+                pair.Value.SelectedIndex = Character.GetIndex(character.DNA[pair.Key.Index], pair.Value.Items.Count);
             }
 
-            foreach (KeyValuePair<Characteristic, ComboBox> pair in propertiesComboBoxes)
+            foreach (var pair in propertiesComboBoxes.Where(kvp => kvp.Value != null))
             {
-                if (pair.Value != null)
-                {
-                    pair.Value.SelectedIndex = Character.GetIndex(character.Properties[pair.Key.Index], pair.Value.Items.Count);
-                }
+                pair.Value.SelectedIndex = Character.GetIndex(character.Properties[pair.Key.Index], pair.Value.Items.Count);
             }
         }
 
@@ -608,9 +607,9 @@ namespace PortraitBuilder.UI
             started = false;
             updateActiveAdditionalContent();
             loadPortraitTypes();
-            refreshCustomCharacteristics();
+            refreshCustomDisplayCharacteristics();
 
-            fillCharacteristicComboBoxes();
+            fillDisplayCharacteristicComboBoxes();
             // TODO No refresh of DNA/Properties needed (if ComboBox has less options ?)
             started = true;
 
@@ -626,14 +625,14 @@ namespace PortraitBuilder.UI
             drawPortrait();
         }
 
-        private void refreshCustomCharacteristics()
+        private void refreshCustomDisplayCharacteristics()
         {
             unregisterCustomProperties();
-            foreach (Characteristic characteristic in getSelectedPortraitType().CustomCharacteristics)
+            foreach (var dc in getSelectedPortraitType().CustomCharacteristics)
             {
-                if (!customPropertiesComboBoxes.ContainsKey(characteristic))
+                if (!customPropertiesComboBoxes.ContainsKey(dc))
                 {
-                    registerCharacteristic(panelProperties, characteristic);
+                    registerDisplayCharacteristic(panelProperties, dc);
                 }
             }
         }
@@ -642,12 +641,12 @@ namespace PortraitBuilder.UI
         // Event handlers
         ///////////////////
 
-        private void onChangeCharacteristic(object sender, EventArgs e)
+        private void onChangeDisplayCharacteristic(object sender, EventArgs e)
         {
             if (started)
             {
                 // Assumption: customPropertiesComboBoxes are contiguous !
-                updatePortrait(getCharacteristicsString(dnaComboBoxes), getCharacteristicsString(propertiesComboBoxes), getCharacteristicsString(customPropertiesComboBoxes));
+                updatePortrait(getDisplayCharacteristicsString(dnaComboBoxes), getDisplayCharacteristicsString(propertiesComboBoxes), getDisplayCharacteristicsString(customPropertiesComboBoxes));
                 drawPortrait();
             }
         }
@@ -691,7 +690,7 @@ namespace PortraitBuilder.UI
                 updatePortrait(dialog.character.DNA, dialog.character.Properties, "");
 
                 // Reflect on dropdown
-                updateSelectedCharacteristicValues(character);
+                updateSelectedDisplayCharacteristicValues(character);
 
                 started = true;
 
@@ -702,7 +701,7 @@ namespace PortraitBuilder.UI
         private void onClickRandomize(object sender, EventArgs e)
         {
             started = false;
-            randomizeCharacteristics(false);
+            randomizeDisplayCharacteristics(false);
             started = true;
 
             drawPortrait();
@@ -729,10 +728,10 @@ namespace PortraitBuilder.UI
             PortraitType selectedPortraitType = getSelectedPortraitType();
             character.PortraitType = selectedPortraitType;
 
-            refreshCustomCharacteristics();
+            refreshCustomDisplayCharacteristics();
 
-            fillCharacteristicComboBoxes();
-            updateSelectedCharacteristicValues(character);
+            fillDisplayCharacteristicComboBoxes();
+            updateSelectedDisplayCharacteristicValues(character);
 
             started = true;
 
@@ -785,7 +784,7 @@ namespace PortraitBuilder.UI
                 logger.LogInformation(string.Format("Content change for {0} in content {1}", path, content));
                 loader.RefreshContent(content);
                 loadPortraitTypes();
-                fillCharacteristicComboBoxes();
+                fillDisplayCharacteristicComboBoxes();
                 drawPortrait();
             }
             else

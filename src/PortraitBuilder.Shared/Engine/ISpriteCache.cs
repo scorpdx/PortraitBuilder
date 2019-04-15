@@ -5,6 +5,6 @@ namespace PortraitBuilder.Engine
 {
     public interface ISpriteCache : IDisposable
     {
-        Sprite Get(SpriteDef def);
+        ISprite Get(SpriteDef def);
     }
 }

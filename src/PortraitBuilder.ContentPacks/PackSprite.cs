@@ -1,18 +1,16 @@
-﻿using Microsoft.Extensions.Logging;
-using PortraitBuilder.Engine;
+﻿using PortraitBuilder.Engine;
 using SkiaSharp;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
 namespace PortraitBuilder.ContentPacks
 {
-    public class PackSprite : Sprite
+    public class PackSprite : ISprite
     {
-        private static ILogger logger = LoggingHelper.CreateLogger<PackSprite>();
-
-        public override IReadOnlyList<SKBitmap> Tiles { get; }
+        private readonly Lazy<SKBitmap>[] _tiles;
 
         public PackSprite(string tileDir, int frameCount)
         {
@@ -21,32 +19,35 @@ namespace PortraitBuilder.ContentPacks
                 .Select(fi => new
                 {
                     Index = int.Parse(Path.GetFileNameWithoutExtension(fi.Name)),
-                    Tile = SKBitmap.Decode(fi.FullName)
+                    Tile = new Lazy<SKBitmap>(() => SKBitmap.Decode(fi.FullName))
                 });
 
-            var tiles = new SKBitmap[frameCount];
+            _tiles = new Lazy<SKBitmap>[frameCount];
             foreach (var a in foundTiles)
             {
-                tiles[a.Index] = a.Tile;
+                _tiles[a.Index] = a.Tile;
             }
-
-            if (tiles.Any(a => a == null))
-            {
-                logger.LogWarning("Pack sprite in {0} expected {1} frames but got {2}", dir.FullName, frameCount, tiles.Count(a => a != null));
-            }
-
-            Tiles = tiles;
         }
 
-        protected override void Dispose(bool disposing)
+        public SKBitmap this[int index] => _tiles[index].Value;
+
+        public int Count => _tiles.Length;
+
+        public void Dispose() => Dispose(true);
+
+        protected virtual void Dispose(bool disposing)
         {
             if (disposing)
             {
-                foreach (var tile in Tiles)
+                foreach (var tile in _tiles.Where(tile => tile?.IsValueCreated ?? false))
                 {
-                    tile?.Dispose();
+                    tile.Value.Dispose();
                 }
             }
         }
+
+        public IEnumerator<SKBitmap> GetEnumerator() => ((IEnumerable<Lazy<SKBitmap>>)_tiles).Select(_tile => _tile.Value).GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => _tiles.GetEnumerator();
     }
 }

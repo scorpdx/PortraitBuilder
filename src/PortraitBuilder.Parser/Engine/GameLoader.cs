@@ -179,7 +179,7 @@ namespace PortraitBuilder.Engine
         public override void InvalidateCache()
         {
             var oldcache = Cache;
-            Cache = new SpriteCache(ActiveContent);
+            Cache = new GameSpriteCache(ActiveContent);
             oldcache?.Dispose();
         }
 

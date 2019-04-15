@@ -8,24 +8,26 @@ using System.IO;
 
 namespace PortraitBuilder.Engine
 {
-    public sealed class SpriteCache : IDisposable, ISpriteCache
+    public sealed class GameSpriteCache : IDisposable, ISpriteCache
     {
-        private static readonly ILogger logger = LoggingHelper.CreateLogger<SpriteCache>();
+        private static readonly ILogger logger = LoggingHelper.CreateLogger<GameSpriteCache>();
 
         public IReadOnlyList<Content> ActiveContent { get; }
 
-        private ConcurrentDictionary<SpriteDef, Sprite> _sprites;
+        private ConcurrentDictionary<SpriteDef, GameSprite> _sprites;
 
-        public SpriteCache(IEnumerable<Content> activeContent)
+        public GameSpriteCache(IEnumerable<Content> activeContent)
         {
             //create a copy
             ActiveContent = new List<Content>(activeContent);
-            _sprites = new ConcurrentDictionary<SpriteDef, Sprite>();
+            _sprites = new ConcurrentDictionary<SpriteDef, GameSprite>();
         }
 
-        public Sprite Get(SpriteDef def) => _sprites?.GetOrAdd(def, LoadSprite) ?? throw new ObjectDisposedException(nameof(SpriteCache));
+        public GameSprite Get(SpriteDef def) => _sprites?.GetOrAdd(def, LoadSprite) ?? throw new ObjectDisposedException(nameof(GameSpriteCache));
 
-        private Sprite LoadSprite(SpriteDef def)
+        ISprite ISpriteCache.Get(SpriteDef def) => Get(def);
+
+        private GameSprite LoadSprite(SpriteDef def)
         {
             // Paths in vanilla files are Windows-style
             string filePath = def.TextureFilePath;//.Replace('\\', Path.DirectorySeparatorChar);
@@ -58,7 +60,7 @@ namespace PortraitBuilder.Engine
                 throw new FileNotFoundException(string.Format("Unable to find file: {0} under active content {1}", filePath, ActiveContent));
 
             logger.LogDebug("Loading sprite from: {0}", path);
-            return new Sprite(path, def.FrameCount);
+            return new GameSprite(path, def.FrameCount);
         }
 
         #region IDisposable Support
