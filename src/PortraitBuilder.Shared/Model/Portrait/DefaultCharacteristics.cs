@@ -4,7 +4,6 @@ using System.Text;
 
 namespace PortraitBuilder.Model.Portrait
 {
-    using static Characteristic;
     public static class DefaultCharacteristics
     {
         public static Characteristic BACKGROUND = new Characteristic("Background", 0, CharacteristicType.Property, true);
@@ -44,7 +43,7 @@ namespace PortraitBuilder.Model.Portrait
         public static Characteristic SPECIAL_HELMET = new Characteristic("Helmet", 34, CharacteristicType.Property, false);
         public static Characteristic SPECIAL_MASK = new Characteristic("Mask", 35, CharacteristicType.Property, false);
         public static Characteristic SPECIAL_SCEPTER = new Characteristic("Scepter", 36, CharacteristicType.Property, false);
-
+        public static Characteristic RELATIONSHIP = new Characteristic("Relationship", 37, CharacteristicType.Property, false);
 
         public static Characteristic NECK = new Characteristic("Neck", 0, CharacteristicType.DNA, true);
         public static Characteristic CHIN = new Characteristic("Chin", 1, CharacteristicType.DNA, true);
@@ -61,7 +60,8 @@ namespace PortraitBuilder.Model.Portrait
         public static Characteristic[] DNA = new Characteristic[] { NECK, CHIN, MOUTH, NOSE, CHEEKS, D5, EYES, EARS, HAIR_COLOR, EYE_COLOR, D10 };
         public static Characteristic[] PROPERTIES = new Characteristic[] { BACKGROUND, HAIR, HEAD, CLOTHES, BEARD, HEADGEAR, IMPRISONED, SCARS, RED_DOTS, BOILS,
             BLINDED, PLAYER, MASK, EYEPATCH, MAKEUP, MAKEUP_2, JEWELRY, IMMORTALITY, SPECIAL_CROWN_BEHIND, SPECIAL_CROWN, FRECKLES, PHYSIQUE, PALE, BLACK_EYE,
-            HAIRELIP, SCARS_MID, SCARS_HIGH, BLOOD, TATTOO, WARPAINT, POSSESSED, OVERLAYER_BEHIND, OVERLAYER, UNDERMAIN, SPECIAL_HELMET, SPECIAL_MASK, SPECIAL_SCEPTER };
+            HAIRELIP, SCARS_MID, SCARS_HIGH, BLOOD, TATTOO, WARPAINT, POSSESSED, OVERLAYER_BEHIND, OVERLAYER, UNDERMAIN,
+            SPECIAL_HELMET, SPECIAL_MASK, SPECIAL_SCEPTER, RELATIONSHIP };
 
 
         public static Characteristic GetProperty(int index)
