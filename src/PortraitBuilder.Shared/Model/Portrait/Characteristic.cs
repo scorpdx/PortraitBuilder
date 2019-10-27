@@ -20,6 +20,9 @@ namespace PortraitBuilder.Model.Portrait
             this.Custom = custom;
         }
 
+        //for deserialization
+        public Characteristic() { }
+
         public string Name { get; }
 
         /// <summary>
