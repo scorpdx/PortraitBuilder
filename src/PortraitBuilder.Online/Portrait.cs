@@ -16,6 +16,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Buffers;
+using System.Text.Json;
 
 namespace PortraitBuilder.Online
 {
@@ -38,7 +39,9 @@ namespace PortraitBuilder.Online
             var skiaConv = new SkiaConverter();
             var json = await blob.DownloadTextAsync();
 
-            return JsonConvert.DeserializeObject<PortraitData>(json, skiaConv);
+            var options = new JsonSerializerOptions();
+            options.Converters.Add(new SkiaConverter());
+            return System.Text.Json.JsonSerializer.Deserialize<PortraitData>(json, options);
         });
 
         private static readonly ConcurrentDictionary<string, Task<SKBitmap>> _blobTileCache = new ConcurrentDictionary<string, Task<SKBitmap>>();
