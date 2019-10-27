@@ -13,14 +13,14 @@ namespace PortraitBuilder.Model.Portrait
         /// <summary>
         /// The name of the layer (E.g GFX_character_background)
         /// </summary>
-        public string Name;
+        public string Name { get; set; }
 
         /// <summary>
         /// The characteristic associated to this layer.
         /// 
         /// Used to determine which variation will be used within the asset sprite
         /// </summary>
-        public Characteristic Characteristic;
+        public Characteristic Characteristic { get; set; }
 
         /// <summary>
         /// The culture index. 
@@ -36,26 +36,26 @@ namespace PortraitBuilder.Model.Portrait
         /// 6 = headgear behind hairlayer
         /// 7 = headgear hairlayer
         /// </summary>
-        public int CultureIndex = -1;
+        public int CultureIndex { get; set; } = -1;
 
         /// <summary>
         /// Whether this layer should apply hair coloration 
         /// 
         /// Note: used for both hair and beard layers
         /// </summary>
-        public bool IsHair;
+        public bool IsHair { get; set; }
 
         /// <summary>
         /// Whether this layer should apply eye coloration 
         /// </summary>
-        public bool IsEye;
+        public bool IsEye { get; set; }
 
-        public bool DontRefreshIfValid = false;
+        public bool DontRefreshIfValid { get; set; } = false;
 
         /// <summary>
         /// The offset coordinates for this layer, from the bottom-left of the image
         /// </summary>
-        public Point Offset = new Point(0, 0);
+        public Point Offset { get; set; } = new Point(0, 0);
 
         public override string ToString() => $"{Name}:{Characteristic}";
     }
