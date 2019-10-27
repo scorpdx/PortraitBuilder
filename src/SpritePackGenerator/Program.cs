@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using PortraitBuilder.ContentPacks;
+﻿using PortraitBuilder.ContentPacks;
 using PortraitBuilder.Engine;
 using PortraitBuilder.Model;
 using PortraitBuilder.Model.Content;
@@ -9,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace SpritePackGenerator
 {
@@ -38,7 +38,7 @@ namespace SpritePackGenerator
                 Console.WriteLine("Loading vanilla content from {0}", user.GameDir);
                 loader.LoadVanilla(user.GameDir);
                 ExtractContent(loader.Vanilla, false);
-                //ExtractContentSprites(loader.Vanilla, false);
+                ExtractContentSprites(loader.Vanilla, false);
 
                 Console.WriteLine("Loading DLC content from {0}", user.ModDir);
                 Console.WriteLine("Saving to {0}", user.DlcDir);
@@ -59,7 +59,7 @@ namespace SpritePackGenerator
                 foreach (var dlc in activeDlcs)
                 {
                     ExtractContent(dlc, true);
-                    //ExtractContentSprites(dlc, true);
+                    ExtractContentSprites(dlc, true);
                 }
 
                 Console.WriteLine("Extracted packs.");
@@ -68,7 +68,10 @@ namespace SpritePackGenerator
                 Console.WriteLine("Generating mergefile...");
 
                 var portraitData = MergePacks();
-                File.WriteAllText("packs/portraits.json", JsonConvert.SerializeObject(portraitData, new SkiaConverter()));
+
+                var options = new JsonSerializerOptions();
+                options.Converters.Add(new SkiaConverter());
+                File.WriteAllText("packs/portraits.json", JsonSerializer.Serialize(portraitData, options));
 
                 Console.WriteLine("Saved portrait mergefile.");
                 Console.WriteLine("Done");
@@ -79,12 +82,14 @@ namespace SpritePackGenerator
         {
             var packDir = new DirectoryInfo("packs/");
 
-            var skiaConv = new SkiaConverter();
+            var options = new JsonSerializerOptions();
+            options.Converters.Add(new SkiaConverter());
+
             var packContents = packDir.EnumerateFiles("*.json", SearchOption.AllDirectories)
                 .Where(fi => fi.DirectoryName != packDir.FullName.TrimEnd(Path.DirectorySeparatorChar))
                 .Select(fi => fi.FullName)
                 .Select(File.ReadAllText)
-                .Select(json => JsonConvert.DeserializeObject<Content>(json, skiaConv));
+                .Select(json => JsonSerializer.Deserialize<Content>(json, options));
 
             var loader = new PackLoader();
             foreach (var pack in packContents)
@@ -145,8 +150,10 @@ namespace SpritePackGenerator
                 return;
 
             content.AbsolutePath = Path.Combine(definitionPath, "tiles/");
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(content, new SkiaConverter());
-            File.WriteAllText(definitionJsonPath, json);
+
+            var options = new JsonSerializerOptions();
+            options.Converters.Add(new SkiaConverter());
+            File.WriteAllText(definitionJsonPath, JsonSerializer.Serialize(content, options));
         }
 
         private static void ExtractContentSprites(Content content, bool dlc)
