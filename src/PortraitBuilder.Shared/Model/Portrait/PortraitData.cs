@@ -14,13 +14,13 @@ namespace PortraitBuilder.Model.Portrait
         /// Dictionary of included sprites
         /// Key is the name of the sprite. E.g. GFX_character_background
         /// </summary>
-        public Dictionary<string, SpriteDef> Sprites = new Dictionary<string, SpriteDef>();
+        public Dictionary<string, SpriteDef> Sprites { get; set; } = new Dictionary<string, SpriteDef>();
 
         /// <summary>
         /// Dictionary of included Portrait Types.
         /// Key is the name of the Portrait Type. E.g. PORTRAIT_westerngfx_male
         /// </summary>
-        public Dictionary<string, PortraitType> PortraitTypes = new Dictionary<string, PortraitType>();
+        public Dictionary<string, PortraitType> PortraitTypes { get; set; } = new Dictionary<string, PortraitType>();
 
         /// <summary>
         /// Dictionary of optional external offsets 
@@ -28,7 +28,7 @@ namespace PortraitBuilder.Model.Portrait
         /// 
         /// Note: external offsets (if any) are applied globally during the merging, and not per content.
         /// </summary>
-        public Dictionary<string, Point> Offsets = new Dictionary<string, Point>();
+        public Dictionary<string, Point> Offsets { get; set; } = new Dictionary<string, Point>();
 
         // Last wins implementation
         public void MergeWith(PortraitData other)
