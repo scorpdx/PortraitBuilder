@@ -1,30 +1,24 @@
-﻿using Newtonsoft.Json;
-using SkiaSharp;
+﻿using SkiaSharp;
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace PortraitBuilder.ContentPacks
 {
-    public class SkiaConverter : JsonConverter
+    public class SkiaConverter : JsonConverter<SKColor>
     {
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override SKColor Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            if (value is SKColor color)
-            {
-                serializer.Serialize(writer, color.ToString(), typeof(SKColor));
-            }
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            if (SKColor.TryParse((string)reader.Value, out SKColor color))
+            if(SKColor.TryParse(reader.GetString(), out SKColor color))
             {
                 return color;
             }
             return default;
         }
 
-        public override bool CanRead => true;
-
-        public override bool CanConvert(Type objectType) => objectType == typeof(SKColor);
+        public override void Write(Utf8JsonWriter writer, SKColor value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString());
+        }
     }
 }
