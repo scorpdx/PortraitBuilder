@@ -21,7 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E8549F3D-712
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpritePackGenerator", "src\SpritePackGenerator\SpritePackGenerator.csproj", "{DB7F3FE2-C4F3-4733-8FE0-53180C29E81C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortraitBuilder.ContentPacks", "src\PortraitBuilder.ContentPacks\PortraitBuilder.ContentPacks.csproj", "{2ED1815E-2388-4154-BD41-504B7ECE3A84}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortraitBuilder.ContentPacks", "src\PortraitBuilder.ContentPacks\PortraitBuilder.ContentPacks.csproj", "{2ED1815E-2388-4154-BD41-504B7ECE3A84}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
