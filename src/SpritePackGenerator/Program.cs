@@ -37,8 +37,8 @@ namespace SpritePackGenerator
                 var loader = new GameLoader();
                 Console.WriteLine("Loading vanilla content from {0}", user.GameDir);
                 loader.LoadVanilla(user.GameDir);
-                ExtractContent(loader.Vanilla, false);
                 ExtractContentSprites(loader.Vanilla, false);
+                ExtractContent(loader.Vanilla, false);
 
                 Console.WriteLine("Loading DLC content from {0}", user.ModDir);
                 Console.WriteLine("Saving to {0}", user.DlcDir);
@@ -58,8 +58,8 @@ namespace SpritePackGenerator
 
                 foreach (var dlc in activeDlcs)
                 {
-                    ExtractContent(dlc, true);
                     ExtractContentSprites(dlc, true);
+                    ExtractContent(dlc, true);
                 }
 
                 Console.WriteLine("Extracted packs.");
