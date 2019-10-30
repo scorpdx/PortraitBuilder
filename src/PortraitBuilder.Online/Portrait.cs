@@ -9,7 +9,6 @@ using PortraitBuilder.Model;
 using SkiaSharp;
 using System.Linq;
 using System;
-using PortraitBuilder.ContentPacks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Collections.Generic;
@@ -37,13 +36,10 @@ namespace PortraitBuilder.Online
 
             var container = client.GetContainerReference("packs");
             var blob = container.GetBlockBlobReference("portraits.json");
-
-            var skiaConv = new SkiaConverter();
             var json = await blob.DownloadTextAsync();
 
-            var options = new JsonSerializerOptions();
-            options.Converters.Add(new SkiaConverter());
-            return System.Text.Json.JsonSerializer.Deserialize<PortraitData>(json, options);
+            var options = ContentPacks.JsonHelper.GetDefaultOptions();
+            return JsonSerializer.Deserialize<PortraitData>(json, options);
         });
 
         private static readonly ConcurrentDictionary<string, Task<SKBitmap>> _blobTileCache = new ConcurrentDictionary<string, Task<SKBitmap>>();
@@ -52,8 +48,6 @@ namespace PortraitBuilder.Online
         public static async Task<IActionResult> DrawPortrait(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
-            //LoggingHelper.DefaultLogger = log;
-
             string dna = req.Query["dna"];
             string properties = req.Query["properties"];
             if (string.IsNullOrEmpty(dna) || string.IsNullOrEmpty(properties))
@@ -110,14 +104,17 @@ namespace PortraitBuilder.Online
                 set.Add(step.TileIndex);
             }
 
-            string GetBlobPath(SpriteDef def)
+            static string GetBlobPath(SpriteDef def)
                 => def.TextureFilePath.StartsWith("packs/") ? def.TextureFilePath.Substring("packs/".Length) : def.TextureFilePath;
 
             async Task<SKBitmap> DownloadBitmapAsync(string path)
             {
                 var blob = container.GetBlockBlobReference(path);
                 using var stream = await blob.OpenReadAsync();
-                return SKBitmap.Decode(stream);
+
+                var bmp = SKBitmap.Decode(stream);
+                bmp.SetImmutable();
+                return bmp;
             }
 
             var bitmapTasks = defs

@@ -1,4 +1,5 @@
 ﻿using PortraitBuilder.ContentPacks;
+using PortraitBuilder.ContentPacks.Converters;
 using PortraitBuilder.Engine;
 using PortraitBuilder.Model;
 using PortraitBuilder.Model.Content;
@@ -69,8 +70,7 @@ namespace SpritePackGenerator
 
                 var portraitData = MergePacks();
 
-                var options = new JsonSerializerOptions();
-                options.Converters.Add(new SkiaConverter());
+                var options = PortraitBuilder.ContentPacks.JsonHelper.GetDefaultOptions();
                 File.WriteAllText("packs/portraits.json", JsonSerializer.Serialize(portraitData, options));
 
                 Console.WriteLine("Saved portrait mergefile.");
@@ -82,8 +82,7 @@ namespace SpritePackGenerator
         {
             var packDir = new DirectoryInfo("packs/");
 
-            var options = new JsonSerializerOptions();
-            options.Converters.Add(new SkiaConverter());
+            var options = PortraitBuilder.ContentPacks.JsonHelper.GetDefaultOptions();
 
             var packContents = packDir.EnumerateFiles("*.json", SearchOption.AllDirectories)
                 .Where(fi => fi.DirectoryName != packDir.FullName.TrimEnd(Path.DirectorySeparatorChar))
@@ -152,8 +151,7 @@ namespace SpritePackGenerator
 
             content.AbsolutePath = Path.Combine(definitionPath, "tiles");
 
-            var options = new JsonSerializerOptions();
-            options.Converters.Add(new SkiaConverter());
+            var options = PortraitBuilder.ContentPacks.JsonHelper.GetDefaultOptions();
             File.WriteAllText(definitionJsonPath, JsonSerializer.Serialize(content, options));
         }
 
