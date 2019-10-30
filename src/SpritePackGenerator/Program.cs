@@ -138,6 +138,7 @@ namespace SpritePackGenerator
             return loader.ActivePortraitData;
         }
 
+        /// <remarks>This function modifies the Content! Only use after extracting the Content tiles.</remarks>
         private static void ExtractContent(Content content, bool dlc)
         {
             var definitionPath = Path.Combine("packs", dlc ? content.AbsolutePath : "vanilla");
@@ -149,7 +150,7 @@ namespace SpritePackGenerator
             if (jsonFile.Exists)
                 return;
 
-            content.AbsolutePath = Path.Combine(definitionPath, "tiles/");
+            content.AbsolutePath = Path.Combine(definitionPath, "tiles");
 
             var options = new JsonSerializerOptions();
             options.Converters.Add(new SkiaConverter());
@@ -162,14 +163,20 @@ namespace SpritePackGenerator
             foreach (var def in content.PortraitData.Sprites.Values)
             {
                 Console.WriteLine("Sprite {0}", def.Name);
-                var spritePath = Path.Combine("packs", dlc ? content.AbsolutePath : "vanilla", "tiles/", def.Name + "/");
+                var spritePath = Path.Combine("packs", dlc ? content.AbsolutePath : "vanilla", "tiles", def.Name);
                 var spriteDir = new DirectoryInfo(spritePath);
 
                 try
                 {
                     using var sprite = cache.Get(def);
 
-                    if (sprite.Any())
+                    if (sprite == null)
+                    {
+                        Console.WriteLine("[XXXXXXXXXX] fail: texture not found!");
+                        continue;
+                    }
+
+                    if (sprite.Count > 0)
                         spriteDir.Create();
 
                     Console.Write("[{0}]", new string(' ', sprite.Count));
@@ -184,20 +191,20 @@ namespace SpritePackGenerator
                             continue;
                         }
 
-                        using (var fs = File.Create(tilePath))
-                        {
-                            var pixmap = tile.PeekPixels();
-                            pixmap.Encode(SkiaSharp.SKPngEncoderOptions.Default).SaveTo(fs);
-                        }
+                        Debug.Assert(!tile.IsNull);
+                        using var map = tile.PeekPixels();
+                        using var data = map.Encode(SkiaSharp.SKPngEncoderOptions.Default);
+                        using var fs = File.Create(tilePath);
+                        data.SaveTo(fs);
 
                         Console.Write('*');
                     }
                     Console.WriteLine("] ok!");
                 }
-                catch (FileNotFoundException)
-                {
-                    Console.WriteLine("[XXXXXXXXXX] fail: texture not found!");
-                }
+                //catch (FileNotFoundException)
+                //{
+                //    Console.WriteLine("[XXXXXXXXXX] fail: texture not found!");
+                //}
                 catch (Exception e)
                 {
                     Console.WriteLine("[XXXXXXXXXX] fail: {0}!", e.Message);
