@@ -87,23 +87,27 @@ namespace PortraitBuilder.Engine
             unsafe
             {
                 SKColor* oColor = (SKColor*)output.GetPixels().ToPointer();
-
-                for (int y = 0; y < source.Height; y++)
-                {
-                    for (int x = 0; x < source.Width; x++, oColor++)
-                    {
-                        if (oColor->Alpha == 0) continue;
-
-                        var lerp1 = Lerp(hair.Dark, hair.Base, Clamp(oColor->Green * 2d));
-                        var lerp2 = Lerp(lerp1, hair.Highlight, Clamp((oColor->Green - 128d) * 2));
-                        var final = lerp2.WithAlpha(oColor->Alpha);
-
-                        *oColor = final;
-                    }
-                }
+                ShadeHairUnpremul(oColor, output.Info, hair);
             }
 
             return output;
+        }
+
+        private static unsafe void ShadeHairUnpremul(SKColor* oColor, SKImageInfo info, Hair hair)
+        {
+            for (int y = 0; y < info.Height; y++)
+            {
+                for (int x = 0; x < info.Width; x++, oColor++)
+                {
+                    if (oColor->Alpha == 0) continue;
+
+                    var lerp1 = Lerp(hair.Dark, hair.Base, Clamp(oColor->Green * 2d));
+                    var lerp2 = Lerp(lerp1, hair.Highlight, Clamp((oColor->Green - 128d) * 2));
+                    var final = lerp2.WithAlpha(oColor->Alpha);
+
+                    *oColor = final;
+                }
+            }
         }
     }
 }
