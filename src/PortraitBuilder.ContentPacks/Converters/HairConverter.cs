@@ -11,7 +11,7 @@ namespace PortraitBuilder.ContentPacks.Converters
         public override Hair Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             var colorConverter = (JsonConverter<SKColor>)options.GetConverter(typeof(SKColor));
-
+            
             switch (reader.TokenType)
             {
                 case JsonTokenType.None:
@@ -22,6 +22,10 @@ namespace PortraitBuilder.ContentPacks.Converters
                     }
                     break;
             }
+
+            var darkName = options.PropertyNamingPolicy.ConvertName(nameof(Hair.Dark));
+            var baseName = options.PropertyNamingPolicy.ConvertName(nameof(Hair.Base));
+            var highlightName = options.PropertyNamingPolicy.ConvertName(nameof(Hair.Highlight)); 
 
             SKColor? dark = null, @base = null, highlight = null;
 
@@ -35,13 +39,13 @@ namespace PortraitBuilder.ContentPacks.Converters
 
                 switch (reader.TokenType)
                 {
-                    case JsonTokenType.PropertyName when reader.ValueTextEquals(nameof(Hair.Dark)):
+                    case JsonTokenType.PropertyName when reader.ValueTextEquals(darkName):
                         dark = colorConverter.Read(ref reader, typeof(SKColor), options);
                         break;
-                    case JsonTokenType.PropertyName when reader.ValueTextEquals(nameof(Hair.Base)):
+                    case JsonTokenType.PropertyName when reader.ValueTextEquals(baseName):
                         @base = colorConverter.Read(ref reader, typeof(SKColor), options);
                         break;
-                    case JsonTokenType.PropertyName when reader.ValueTextEquals(nameof(Hair.Highlight)):
+                    case JsonTokenType.PropertyName when reader.ValueTextEquals(highlightName):
                         highlight = colorConverter.Read(ref reader, typeof(SKColor), options);
                         break;
                 }
@@ -67,13 +71,16 @@ namespace PortraitBuilder.ContentPacks.Converters
 
             writer.WriteStartObject();
 
-            writer.WritePropertyName(nameof(Hair.Dark));
+            var darkName = options.PropertyNamingPolicy?.ConvertName(nameof(Hair.Dark));
+            writer.WritePropertyName(darkName);
             colorConverter.Write(writer, value.Dark, options);
 
-            writer.WritePropertyName(nameof(Hair.Base));
+            var baseName = options.PropertyNamingPolicy?.ConvertName(nameof(Hair.Base));
+            writer.WritePropertyName(baseName);
             colorConverter.Write(writer, value.Base, options);
 
-            writer.WritePropertyName(nameof(Hair.Highlight));
+            var highlightName = options.PropertyNamingPolicy?.ConvertName(nameof(Hair.Highlight));
+            writer.WritePropertyName(highlightName);
             colorConverter.Write(writer, value.Highlight, options);
 
             writer.WriteEndObject();
