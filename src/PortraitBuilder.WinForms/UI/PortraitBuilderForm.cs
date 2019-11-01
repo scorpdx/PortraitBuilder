@@ -321,6 +321,20 @@ namespace PortraitBuilder.UI
             }
 
             pbPortrait.Image = Image.FromStream(previewImage.Encode().AsStream(true));
+
+            if (!this.Visible)
+            {
+                return;
+            }
+
+            var (@base, clothing) = GetSelectedGraphicalCultures();
+            var baseUrl = $"https://portraitbuilder.azurewebsites.net/api/portrait?dna={character.DNA}&properties={character.Properties}&base={@base}";
+            var clothingUrl = !string.IsNullOrEmpty(clothing) ? $"&clothing={clothing}" : string.Empty;
+            var govtUrl = $"&government={character.Government}";
+            var titleUrl = character.Rank != TitleRank.None ? $"&titlerank={character.Rank}" : string.Empty;
+            var fullUrl = baseUrl + clothingUrl + govtUrl + titleUrl;
+            logger.LogInformation("Rendering remote portrait: " + fullUrl);
+            pbPortraitOnline.ImageLocation = fullUrl;
         }
 
         private string getDisplayCharacteristicsString(Dictionary<Characteristic, ComboBox> characteristics)
@@ -430,6 +444,9 @@ namespace PortraitBuilder.UI
                 cb.Enabled = false;
             }
         }
+
+        private (string @base, string clothing) GetSelectedGraphicalCultures()
+            => (cbPortraitTypes.SelectedItem?.ToString(), cbCulturePortraitTypes.SelectedItem?.ToString());
 
         private PortraitType getSelectedPortraitType()
         {

@@ -23,14 +23,14 @@ namespace PortraitBuilder.Model.Portrait
         //for deserialization
         public Characteristic() { }
 
-        public string Name { get; }
+        public string Name { get; set; }
 
         /// <summary>
         /// Index of attribute in dna/properties string
         /// </summary>
-        public int Index { get; }
+        public int Index { get; set; }
 
-        public CharacteristicType Type { get; }
+        public CharacteristicType Type { get; set; }
 
         private bool randomizable;
         /// <summary>
@@ -52,7 +52,7 @@ namespace PortraitBuilder.Model.Portrait
         /// <summary>
         /// Whether the characteristic is a non-vanilla one.
         /// </summary>
-        public bool Custom { get; }
+        public bool Custom { get; set; }
 
         public bool Equals(Characteristic other)
         {

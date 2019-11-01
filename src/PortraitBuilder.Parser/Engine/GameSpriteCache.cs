@@ -14,7 +14,7 @@ namespace PortraitBuilder.Engine
 
         public IReadOnlyList<Content> ActiveContent { get; }
 
-        private ConcurrentDictionary<SpriteDef, GameSprite> _sprites;
+        private readonly ConcurrentDictionary<SpriteDef, GameSprite> _sprites;
 
         public GameSpriteCache(IEnumerable<Content> activeContent)
         {
@@ -23,12 +23,20 @@ namespace PortraitBuilder.Engine
             _sprites = new ConcurrentDictionary<SpriteDef, GameSprite>();
         }
 
-        public GameSprite Get(SpriteDef def) => _sprites?.GetOrAdd(def, LoadSprite) ?? throw new ObjectDisposedException(nameof(GameSpriteCache));
+        public GameSprite Get(SpriteDef def)
+        {
+            if (disposedValue)
+                throw new ObjectDisposedException(nameof(GameSpriteCache));
+
+            return _sprites.GetOrAdd(def, LoadSprite);
+        }
 
         ISprite ISpriteCache.Get(SpriteDef def) => Get(def);
 
-        private GameSprite LoadSprite(SpriteDef def)
+        private GameSprite? LoadSprite(SpriteDef def)
         {
+            bool found = false;
+
             // Paths in vanilla files are Windows-style
             string filePath = def.TextureFilePath;//.Replace('\\', Path.DirectorySeparatorChar);
 
@@ -52,12 +60,16 @@ namespace PortraitBuilder.Engine
 
                 if (File.Exists(path))
                 {
+                    found = true;
                     break;
                 }
             }
 
-            if (string.IsNullOrEmpty(path))
-                throw new FileNotFoundException(string.Format("Unable to find file: {0} under active content {1}", filePath, ActiveContent));
+            if (!found)
+            {
+                logger.LogWarning("Unable to find file: {0} under active content {1}", filePath, ActiveContent);
+                return null;
+            }
 
             logger.LogDebug("Loading sprite from: {0}", path);
             return new GameSprite(path, def.FrameCount);
@@ -72,12 +84,9 @@ namespace PortraitBuilder.Engine
             {
                 if (disposing)
                 {
-                    var oldDict = _sprites;
-                    _sprites = null;
-
-                    foreach (var sprite in oldDict.Values)
+                    foreach (var sprite in _sprites.Values)
                     {
-                        sprite.Dispose();
+                        sprite?.Dispose();
                     }
                 }
 
