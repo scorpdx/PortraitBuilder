@@ -12,6 +12,7 @@ using System.Linq;
 using SkiaSharp;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace PortraitBuilder.UI
 {
@@ -327,14 +328,44 @@ namespace PortraitBuilder.UI
                 return;
             }
 
+            var fullUrl = GetOnlinePortraitUrl();
+            logger.LogInformation("Rendering remote portrait: " + fullUrl);
+            lnkLblRemotePortrait.Text = fullUrl;
+            pbPortraitOnline.ImageLocation = fullUrl;
+        }
+
+        private string GetOnlinePortraitUrl()
+        {
             var (@base, clothing) = GetSelectedGraphicalCultures();
-            var baseUrl = $"https://portraitbuilder.azurewebsites.net/api/portrait?dna={character.DNA}&properties={character.Properties}&base={@base}";
+            string host;
+#if DEBUG
+            host = "http://localhost:7071";
+#else
+            host = "https://portraitbuilder.azurewebsites.net";
+#endif
+            var baseUrl = $"{host}/api/portrait?dna={character.DNA}&properties={character.Properties}&base={@base}";
             var clothingUrl = !string.IsNullOrEmpty(clothing) ? $"&clothing={clothing}" : string.Empty;
             var govtUrl = $"&government={character.Government}";
             var titleUrl = character.Rank != TitleRank.None ? $"&titlerank={character.Rank}" : string.Empty;
-            var fullUrl = baseUrl + clothingUrl + govtUrl + titleUrl;
-            logger.LogInformation("Rendering remote portrait: " + fullUrl);
-            pbPortraitOnline.ImageLocation = fullUrl;
+            return baseUrl + clothingUrl + govtUrl + titleUrl;
+        }
+
+        private void OnRemotePortraitLinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            if (!(sender is LinkLabel lnkLbl))
+                return;
+
+            string url;
+            if (e.Link.LinkData != null)
+                url = e.Link.LinkData.ToString();
+            else
+                url = lnkLbl.Text.Substring(e.Link.Start, e.Link.Length);
+
+            Debug.Assert(url.Contains("://"));
+
+            var si = new ProcessStartInfo(url) { UseShellExecute = true };
+            Process.Start(si);
+            lnkLbl.LinkVisited = true;
         }
 
         private string getDisplayCharacteristicsString(Dictionary<Characteristic, ComboBox> characteristics)
@@ -440,7 +471,7 @@ namespace PortraitBuilder.UI
             }
             else
             {
-                logger.LogWarning(string.Format("Could not find frame count for {0} and {1}, disabling dropdown.", portraitType, characteristic));
+                logger.LogWarning("Could not find frame count for {0} and {1}, disabling dropdown.", portraitType, characteristic);
                 cb.Enabled = false;
             }
         }

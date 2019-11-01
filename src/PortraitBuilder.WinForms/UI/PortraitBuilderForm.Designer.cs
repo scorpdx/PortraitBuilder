@@ -58,6 +58,7 @@ namespace PortraitBuilder.UI {
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.btnToogleAll = new System.Windows.Forms.Button();
             this.btnReload = new System.Windows.Forms.Button();
+            this.lnkLblRemotePortrait = new System.Windows.Forms.LinkLabel();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbPortrait)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbPortraitOnline)).BeginInit();
@@ -80,6 +81,7 @@ namespace PortraitBuilder.UI {
             this.groupBox1.Controls.Add(this.btnCopy);
             this.groupBox1.Controls.Add(this.tbDNA);
             this.groupBox1.Controls.Add(this.pbPortrait);
+            this.groupBox1.Controls.Add(this.lnkLblRemotePortrait);
             this.groupBox1.Controls.Add(this.pbPortraitOnline);
             this.groupBox1.Controls.Add(this.cbRank);
             this.groupBox1.Controls.Add(this.label20);
@@ -162,7 +164,7 @@ namespace PortraitBuilder.UI {
             this.tbDNA.Multiline = true;
             this.tbDNA.Name = "tbDNA";
             this.tbDNA.ReadOnly = true;
-            this.tbDNA.Size = new System.Drawing.Size(205, 58);
+            this.tbDNA.Size = new System.Drawing.Size(180, 75);
             this.tbDNA.TabIndex = 23;
             this.tbDNA.TabStop = false;
             this.tbDNA.Text = "dna\r\nproperties";
@@ -176,7 +178,19 @@ namespace PortraitBuilder.UI {
             this.pbPortrait.TabIndex = 0;
             this.pbPortrait.TabStop = false;
             // 
-            // pbPortrait
+            // lnkLblRemotePortrait
+            // 
+            this.lnkLblRemotePortrait.Location = new System.Drawing.Point(212, 350);
+            this.lnkLblRemotePortrait.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.lnkLblRemotePortrait.Name = "lnkLblRemotePortrait";
+            this.lnkLblRemotePortrait.Size = new System.Drawing.Size(180, 120);
+            this.lnkLblRemotePortrait.TabIndex = 0;
+            this.lnkLblRemotePortrait.TabStop = true;
+            this.lnkLblRemotePortrait.UseMnemonic = false;
+            this.lnkLblRemotePortrait.Text = "";
+            this.lnkLblRemotePortrait.LinkClicked += this.OnRemotePortraitLinkClicked;
+            // 
+            // pbPortraitOnline
             // 
             this.pbPortraitOnline.Location = new System.Drawing.Point(212, 118);
             this.pbPortraitOnline.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -507,6 +521,7 @@ namespace PortraitBuilder.UI {
 		private System.Windows.Forms.FlowLayoutPanel panelProperties;
 		private System.Windows.Forms.ComboBox cbCulturePortraitTypes;
 		private System.Windows.Forms.Label label1;
-	}
+        private System.Windows.Forms.LinkLabel lnkLblRemotePortrait;
+    }
 }
 
