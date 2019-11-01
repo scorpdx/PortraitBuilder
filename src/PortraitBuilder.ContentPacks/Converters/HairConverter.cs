@@ -23,10 +23,6 @@ namespace PortraitBuilder.ContentPacks.Converters
                     break;
             }
 
-            var darkName = options.PropertyNamingPolicy.ConvertName(nameof(Hair.Dark));
-            var baseName = options.PropertyNamingPolicy.ConvertName(nameof(Hair.Base));
-            var highlightName = options.PropertyNamingPolicy.ConvertName(nameof(Hair.Highlight)); 
-
             SKColor? dark = null, @base = null, highlight = null;
 
             var startingDepth = reader.CurrentDepth;
@@ -39,13 +35,13 @@ namespace PortraitBuilder.ContentPacks.Converters
 
                 switch (reader.TokenType)
                 {
-                    case JsonTokenType.PropertyName when reader.ValueTextEquals(darkName):
+                    case JsonTokenType.PropertyName when reader.ValueTextEquals("dark"):
                         dark = colorConverter.Read(ref reader, typeof(SKColor), options);
                         break;
-                    case JsonTokenType.PropertyName when reader.ValueTextEquals(baseName):
+                    case JsonTokenType.PropertyName when reader.ValueTextEquals("base"):
                         @base = colorConverter.Read(ref reader, typeof(SKColor), options);
                         break;
-                    case JsonTokenType.PropertyName when reader.ValueTextEquals(highlightName):
+                    case JsonTokenType.PropertyName when reader.ValueTextEquals("highlight"):
                         highlight = colorConverter.Read(ref reader, typeof(SKColor), options);
                         break;
                 }
@@ -71,16 +67,13 @@ namespace PortraitBuilder.ContentPacks.Converters
 
             writer.WriteStartObject();
 
-            var darkName = options.PropertyNamingPolicy?.ConvertName(nameof(Hair.Dark));
-            writer.WritePropertyName(darkName);
+            writer.WritePropertyName("dark");
             colorConverter.Write(writer, value.Dark, options);
 
-            var baseName = options.PropertyNamingPolicy?.ConvertName(nameof(Hair.Base));
-            writer.WritePropertyName(baseName);
+            writer.WritePropertyName("base");
             colorConverter.Write(writer, value.Base, options);
 
-            var highlightName = options.PropertyNamingPolicy?.ConvertName(nameof(Hair.Highlight));
-            writer.WritePropertyName(highlightName);
+            writer.WritePropertyName("highlight");
             colorConverter.Write(writer, value.Highlight, options);
 
             writer.WriteEndObject();
