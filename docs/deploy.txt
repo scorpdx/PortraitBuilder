@@ -1,0 +1,43 @@
+* Example URLs *
+
+https://portraitbuilder.azurewebsites.net/api/portraittypes
+https://portraitbuilder.azurewebsites.net/api/portrait?dna=0ebhh0d0cb0&properties=kg0g0a00000000000000000000000000000000&base=egyptiangfx_female&clothing=egyptiangfx_female&government=iqta&titlerank=duke
+https://portraitbuilder.azurewebsites.net/api/portrait?dna=wofssnplqfk&properties=ea0a000i00000d000000000000000000000000&base=normangfx_male&government=feudal&titlerank=emperor
+
+---
+
+* LINUX *
+
+az group create --name scorpdx --location southcentralus
+
+az storage account create --name scorpdx --location southcentralus --resource-group scorpdx --kind StorageV2 --sku Standard_LRS
+
+az functionapp create -n portraitbuilder -g scorpdx -s scorpdx -c southcentralus --os-type Linux --runtime dotnet --app-insights portraitbuilder --app-insights-key $APPINSIGHTS_INSTRUMENTATIONKEY
+
+func azure functionapp publish portraitbuilder
+
+---
+
+* WINDOWS * 
+
+az group create --name scorpdx --location southcentralus
+
+az storage account create --name scorpdx --location southcentralus --resource-group scorpdx --kind StorageV2 --sku Standard_LRS
+
+az functionapp create -n portraitbuilder -g scorpdx -s scorpdx -c southcentralus --os-type Windows --runtime dotnet --app-insights portraitbuilder --app-insights-key $APPINSIGHTS_INSTRUMENTATIONKEY
+
+func azure functionapp publish portraitbuilderwin
+
+---
+
+* TILE PACKS *
+
+* Deploy portrait data only *
+
+cd packs
+./azcopy sync "./" "https://portraitbuilderpacks.blob.core.windows.net/ + SAS token" --put-md5 --include-pattern="*.json"
+
+* Deploy EVERYTHING (and remove deleted) *
+
+cd packs
+./azcopy sync "./" "https://portraitbuilderpacks.blob.core.windows.net/ + SAS token" --put-md5 --delete-destination true
