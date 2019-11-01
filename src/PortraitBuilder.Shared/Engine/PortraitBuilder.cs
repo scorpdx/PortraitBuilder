@@ -31,7 +31,7 @@ namespace PortraitBuilder.Engine
             public int TileIndex { get; set; }
             public SKBitmap? Tile { get; set; }
 
-            private SkiaSharp.SKPointI? tileOffset;
+            private SKPointI? tileOffset;
             //var p = new SKPointI(12 + layer.Offset.X, 12 + 152 - tile.Height - layer.Offset.Y);
             public SKPointI TileOffset
             {
@@ -53,7 +53,7 @@ namespace PortraitBuilder.Engine
 
         public class EyeRenderStep : TileRenderStep
         {
-            public SkiaSharp.SKColor EyeColor;
+            public SKColor EyeColor;
         }
 
         public static IEnumerable<TileRenderStep> BuildCharacter(Character character, Dictionary<string, SpriteDef> sprites)
@@ -129,7 +129,7 @@ namespace PortraitBuilder.Engine
 
         private static TileRenderStep? BuildTile(Character character, Layer layer, SpriteDef def, int tileIndex)
         {
-            var tileOffset = new SkiaSharp.SKPointI(12 + layer.Offset.X, 12 + 152 /*- tile.Height*/ - layer.Offset.Y);
+            var tileOffset = new SKPointI(12 + layer.Offset.X, 12 + 152 /*- tile.Height*/ - layer.Offset.Y);
             if (layer.IsHair)
             {
                 var hairColors = character.PortraitType.HairColours;
