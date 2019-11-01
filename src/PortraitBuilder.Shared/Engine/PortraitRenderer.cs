@@ -2,6 +2,7 @@
 using PortraitBuilder.Model.Portrait;
 using SkiaSharp;
 using System.Diagnostics;
+using System;
 
 namespace PortraitBuilder.Engine
 {
@@ -17,17 +18,15 @@ namespace PortraitBuilder.Engine
         public static SKBitmap DrawPortrait(IEnumerable<PortraitBuilder.TileRenderStep> steps)
         {
             var portraitInfo = new SKImageInfo(176, 176);
-            var portraitImage = new SKBitmap(portraitInfo);
-            using (var canvas = new SKCanvas(portraitImage))
+            var portraitImage = new SKBitmap(portraitInfo, SKBitmapAllocFlags.ZeroPixels);
+
+            using var canvas = new SKCanvas(portraitImage);
+            foreach (var step in steps)
             {
-                //must set transparent bg for unpremul -> premul
-                //use white transparent
-                canvas.Clear(SKColors.Transparent);
-                foreach (var step in steps)
-                {
-                    DrawTile(canvas, step);
-                }
+                Debug.Assert(step.Tile != null);
+                DrawTile(canvas, step);
             }
+            canvas.Flush();
 
             return portraitImage;
         }
@@ -51,26 +50,25 @@ namespace PortraitBuilder.Engine
         /// <summary>
         /// Based on gfx\FX\portrait.lua EyePixelShader
         /// </summary>
-        public static SKBitmap ShadeEye(SKBitmap source, SKColor eyeColor)
+        public static unsafe SKBitmap ShadeEye(SKBitmap source, SKColor eyeColor)
         {
             var output = source.Copy();
 
-            unsafe
+            var pixelAddr = output.GetPixels();
+            Debug.Assert(pixelAddr != IntPtr.Zero);
+
+            SKColor* oColor = (SKColor*)pixelAddr.ToPointer();
+            for (int y = 0; y < source.Height; y++)
             {
-                SKColor* oColor = (SKColor*)output.GetPixels().ToPointer();
-
-                for (int y = 0; y < source.Height; y++)
+                for (int x = 0; x < source.Width; x++, oColor++)
                 {
-                    for (int x = 0; x < source.Width; x++, oColor++)
-                    {
-                        if (oColor->Alpha == 0) continue;
+                    if (oColor->Alpha == 0) continue;
 
-                        var final = new SKColor(blue: (byte)(255 * ((eyeColor.Blue / 255d) * (oColor->Red / 255d))),
-                                                green: (byte)(255 * ((eyeColor.Green / 255d) * (oColor->Red / 255d))),
-                                                red: (byte)(255 * ((eyeColor.Red / 255d) * (oColor->Red / 255d))),
-                                                alpha: oColor->Alpha);
-                        *oColor = final;
-                    }
+                    var final = new SKColor(blue: (byte)(255 * ((eyeColor.Blue / 255d) * (oColor->Red / 255d))),
+                                            green: (byte)(255 * ((eyeColor.Green / 255d) * (oColor->Red / 255d))),
+                                            red: (byte)(255 * ((eyeColor.Red / 255d) * (oColor->Red / 255d))),
+                                            alpha: oColor->Alpha);
+                    *oColor = final;
                 }
             }
 
@@ -80,24 +78,17 @@ namespace PortraitBuilder.Engine
         /// <summary>
         /// Based on gfx\FX\portrait.lua HairPixelShader
         /// </summary>
-        public static SKBitmap ShadeHair(SKBitmap source, Hair hair)
+        public static unsafe SKBitmap ShadeHair(SKBitmap source, Hair hair)
         {
             var output = source.Copy();
 
-            unsafe
-            {
-                SKColor* oColor = (SKColor*)output.GetPixels().ToPointer();
-                ShadeHairUnpremul(oColor, output.Info, hair);
-            }
+            var pixelAddr = output.GetPixels();
+            Debug.Assert(pixelAddr != IntPtr.Zero);
 
-            return output;
-        }
-
-        private static unsafe void ShadeHairUnpremul(SKColor* oColor, SKImageInfo info, Hair hair)
-        {
-            for (int y = 0; y < info.Height; y++)
+            var oColor = (SKColor*)pixelAddr.ToPointer();
+            for (int y = 0; y < output.Height; y++)
             {
-                for (int x = 0; x < info.Width; x++, oColor++)
+                for (int x = 0; x < output.Width; x++, oColor++)
                 {
                     if (oColor->Alpha == 0) continue;
 
@@ -108,6 +99,8 @@ namespace PortraitBuilder.Engine
                     *oColor = final;
                 }
             }
+
+            return output;
         }
     }
 }
