@@ -21,6 +21,7 @@ namespace PortraitBuilder.Engine
             var portraitImage = new SKBitmap(portraitInfo, SKBitmapAllocFlags.ZeroPixels);
 
             using var canvas = new SKCanvas(portraitImage);
+            canvas.Clear(SKColors.Transparent);
             foreach (var step in steps)
             {
                 Debug.Assert(step.Tile != null);
@@ -52,7 +53,18 @@ namespace PortraitBuilder.Engine
         /// </summary>
         public static unsafe SKBitmap ShadeEye(SKBitmap source, SKColor eyeColor)
         {
-            var output = source.Copy();
+            SKBitmap output;
+            switch(source.Info.AlphaType)
+            {
+                case SKAlphaType.Unpremul:
+                    output = source.Copy();
+                    break;
+                default:
+                    output = new SKBitmap(source.Info.WithAlphaType(SKAlphaType.Unpremul));
+                    if (!source.ScalePixels(output, SKFilterQuality.High))
+                        throw new InvalidOperationException("failed to translate source eye tile");
+                    break;
+            }
 
             var pixelAddr = output.GetPixels();
             Debug.Assert(pixelAddr != IntPtr.Zero);
@@ -80,7 +92,18 @@ namespace PortraitBuilder.Engine
         /// </summary>
         public static unsafe SKBitmap ShadeHair(SKBitmap source, Hair hair)
         {
-            var output = source.Copy();
+            SKBitmap output;
+            switch (source.Info.AlphaType)
+            {
+                case SKAlphaType.Unpremul:
+                    output = source.Copy();
+                    break;
+                default:
+                    output = new SKBitmap(source.Info.WithAlphaType(SKAlphaType.Unpremul));
+                    if (!source.ScalePixels(output, SKFilterQuality.High))
+                        throw new InvalidOperationException("failed to translate source hair tile");
+                    break;
+            }
 
             var pixelAddr = output.GetPixels();
             Debug.Assert(pixelAddr != IntPtr.Zero);
