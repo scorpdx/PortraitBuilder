@@ -1,4 +1,5 @@
 using SkiaSharp;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -57,5 +58,34 @@ namespace PortraitBuilder.Model.Portrait
 
         public Layer GetCultureLayer(int cultureIndex)
             => Layers.FirstOrDefault(l => l.CultureIndex == cultureIndex);
+
+        //Adult portrait example: PORTRAIT_italiangfx_male2
+        //Child portrait example: PORTRAIT_italiangfx_child_male
+        public string GetChildSpriteName()
+        {
+            var sEarly = "_early".AsSpan();
+            var sLate = "_late".AsSpan();
+            var sAgeSuffixes = "12".AsSpan();
+
+            var ns = Name.AsSpan();
+            //remove age modifiers
+            ns = ns.TrimEnd(sAgeSuffixes);
+            //remove period modifiers
+            if(ns.EndsWith(sEarly))
+            {
+                ns = ns.Slice(0, ns.Length - sEarly.Length);
+            }
+            if(ns.EndsWith(sLate))
+            {
+                ns = ns.Slice(0, ns.Length - sLate.Length);
+            }
+
+            var lastSeparator = ns.LastIndexOf('_');
+            var @base = ns.Slice(0, lastSeparator);
+            var sex = ns.Slice(lastSeparator + 1);
+
+            //FIXME
+            return @base.ToString() + "_child_" + sex.ToString();
+        }
     }
 }
