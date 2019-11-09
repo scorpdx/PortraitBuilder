@@ -3,6 +3,7 @@ using SkiaSharp;
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using static PortraitBuilder.ContentPacks.JsonHelper;
 
 namespace PortraitBuilder.ContentPacks.Converters
 {
@@ -47,9 +48,6 @@ namespace PortraitBuilder.ContentPacks.Converters
                 }
             }
             while (reader.CurrentDepth > startingDepth);
-
-            void ThrowIncompleteObject(string missingPropertyName)
-                => throw new JsonException($"Required member \"{missingPropertyName}\" was not found", new ArgumentNullException(missingPropertyName));
 
             if (!dark.HasValue)
                 ThrowIncompleteObject(nameof(dark));
