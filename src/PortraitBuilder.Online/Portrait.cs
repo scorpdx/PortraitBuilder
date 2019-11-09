@@ -52,6 +52,7 @@ namespace PortraitBuilder.Online
                 var year = characterModel.Year.Value;
                 periodSuffix = year < 950 ? "early" : year > 1250 ? "late" : "";
             }
+
             string ageSuffix = default;
             if (characterModel.Age.HasValue)
             {
@@ -60,12 +61,15 @@ namespace PortraitBuilder.Online
             }
 
             PortraitType portraitType = default;
+            var fallbacks = new List<PortraitType>();
             foreach (var graphicalCulture in cultureLookup[characterModel.Culture])
             {
                 bool omitPeriod = false;
                 bool omitAge = false;
+                PortraitType foundPortraitType;
 
-                while (!portrait.PortraitTypes.TryGetValue($"PORTRAIT_{graphicalCulture}_{sexSuffix}{(omitPeriod ? "" : periodSuffix)}{(omitAge ? "" : ageSuffix)}", out portraitType))
+                var portraitTypeName = $"PORTRAIT_{graphicalCulture}_{sexSuffix}{(omitPeriod ? "" : periodSuffix)}{(omitAge ? "" : ageSuffix)}";
+                while (!portrait.PortraitTypes.TryGetValue(portraitTypeName, out foundPortraitType))
                 {
                     if (omitPeriod && omitAge)
                         break;
@@ -75,10 +79,11 @@ namespace PortraitBuilder.Online
                         omitAge = true;
                 }
 
-                if (portraitType != null)
-                {
-                    break;
-                }
+                if (foundPortraitType == null)
+                    continue;
+
+                portraitType ??= foundPortraitType;
+                fallbacks.Add(foundPortraitType);
             }
 
             if (portraitType == null)
@@ -87,6 +92,7 @@ namespace PortraitBuilder.Online
             }
 
             character.PortraitType = portraitType;
+            character.FallbackPortraitTypes = fallbacks;
 
             using var portraitBitmap = await DrawPortraitInternal(character);
             using var portraitPixmap = portraitBitmap.PeekPixels();
