@@ -90,6 +90,7 @@ namespace PortraitBuilder.Online
 
             using var portraitBitmap = await DrawPortraitInternal(character);
             using var portraitPixmap = portraitBitmap.PeekPixels();
+
             var portraitPng = portraitPixmap.Encode(SKPngEncoderOptions.Default);
             return new FileStreamResult(portraitPng.AsStream(), "image/png");
         }
@@ -147,8 +148,8 @@ namespace PortraitBuilder.Online
 
             using var portraitBitmap = await DrawPortraitInternal(character);
             using var portraitPixmap = portraitBitmap.PeekPixels();
-            using var portraitPng = portraitPixmap.Encode(SKPngEncoderOptions.Default);
-
+            
+            var portraitPng = portraitPixmap.Encode(SKPngEncoderOptions.Default);
             return new FileStreamResult(portraitPng.AsStream(), "image/png");
         }
 
