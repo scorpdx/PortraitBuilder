@@ -48,7 +48,7 @@ namespace PortraitBuilder.Model.Portrait
             if (string.IsNullOrEmpty(properties))
                 throw new ArgumentNullException(nameof(properties));
 
-            void ThrowForLength(string paramName) => throw new ArgumentException($"{paramName} is too short");
+            static void ThrowForLength(string paramName) => throw new ArgumentException($"{paramName} is too short");
 
             if (dna.Length < 10)
                 ThrowForLength(nameof(dna));
