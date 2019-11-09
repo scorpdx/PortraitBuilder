@@ -3,6 +3,8 @@ using PortraitBuilder.Model;
 using PortraitBuilder.Model.Portrait;
 using SkiaSharp;
 using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace PortraitBuilder.Engine
 {
@@ -63,6 +65,28 @@ namespace PortraitBuilder.Engine
                 yield return BuildLayer(layer, character, sprites);
             }
 
+            yield return BuildBorder(character, sprites);
+        }
+
+        public static IEnumerable<TileRenderStep> BuildChild(Character character, Dictionary<string, SpriteDef> sprites, IEnumerable<PortraitType> fallbacks)
+        {
+            IEnumerable<string> GetPossibleSpriteNames()
+            {
+                yield return character.PortraitType.GetChildSpriteName();
+                foreach (var portraitType in fallbacks)
+                {
+                    yield return portraitType.GetChildSpriteName();
+                }
+            }
+
+            var spriteDef = GetPossibleSpriteNames()
+                .Intersect(sprites.Keys)
+                .Select(spriteName => sprites[spriteName])
+                .FirstOrDefault();
+            if (spriteDef == null)
+                throw new InvalidOperationException("Could not find child sprite def");
+
+            yield return BuildSpriteTile(character, spriteDef, 0);
             yield return BuildBorder(character, sprites);
         }
 
