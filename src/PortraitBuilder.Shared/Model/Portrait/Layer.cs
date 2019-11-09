@@ -36,7 +36,7 @@ namespace PortraitBuilder.Model.Portrait
         /// 6 = headgear behind hairlayer
         /// 7 = headgear hairlayer
         /// </summary>
-        public int CultureIndex { get; set; } = -1;
+        public int? CultureIndex { get; set; }
 
         /// <summary>
         /// Whether this layer should apply hair coloration 
