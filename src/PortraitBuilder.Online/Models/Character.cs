@@ -15,5 +15,7 @@ namespace PortraitBuilder.Online.Models
         public int? Year { get; set; }
         public string? Rank { get; set; }
         public string? Government { get; set; }
+        public string? Religion { get; set; }
+        public bool? ReligiousHead { get; set; }
     }
 }
