@@ -57,7 +57,10 @@ namespace PortraitBuilder.Online
             if (characterModel.Age.HasValue)
             {
                 var age = characterModel.Age.Value;
+                //Confusingly, children's portraits are defined
+                //with the age suffix before the sex suffix
                 ageSuffix = age <= 30 ? "" : age < 50 ? "1" : "2";
+                character.IsChild = age < 16;
             }
 
             PortraitType portraitType = default;
@@ -68,8 +71,9 @@ namespace PortraitBuilder.Online
                 bool omitAge = false;
                 PortraitType foundPortraitType;
 
-                var portraitTypeName = $"PORTRAIT_{graphicalCulture}_{sexSuffix}{(omitPeriod ? "" : periodSuffix)}{(omitAge ? "" : ageSuffix)}";
-                while (!portrait.PortraitTypes.TryGetValue(portraitTypeName, out foundPortraitType))
+                while (!portrait.PortraitTypes.TryGetValue(
+                    $"PORTRAIT_{graphicalCulture}_{sexSuffix}{(omitPeriod ? "" : periodSuffix)}{(omitAge ? "" : ageSuffix)}",
+                    out foundPortraitType))
                 {
                     if (omitPeriod && omitAge)
                         break;
@@ -167,7 +171,11 @@ namespace PortraitBuilder.Online
                 throw new InvalidOperationException("no PortraitTypes found in loaded portrait pack");
             }
 
-            var steps = PortraitBuilder.Engine.PortraitBuilder.BuildCharacter(character, portrait.Sprites)
+            var buildSteps = character.IsChild
+                ? PortraitBuilder.Engine.PortraitBuilder.BuildChild(character, portrait.Sprites)
+                : PortraitBuilder.Engine.PortraitBuilder.BuildCharacter(character, portrait.Sprites);
+
+            var steps = buildSteps
                 .Where(s => s != null)
                 .ToArray();
 

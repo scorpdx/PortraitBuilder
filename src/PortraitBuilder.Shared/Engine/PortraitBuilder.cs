@@ -68,12 +68,12 @@ namespace PortraitBuilder.Engine
             yield return BuildBorder(character, sprites);
         }
 
-        public static IEnumerable<TileRenderStep> BuildChild(Character character, Dictionary<string, SpriteDef> sprites, IEnumerable<PortraitType> fallbacks)
+        public static IEnumerable<TileRenderStep> BuildChild(Character character, Dictionary<string, SpriteDef> sprites)
         {
             IEnumerable<string> GetPossibleSpriteNames()
             {
                 yield return character.PortraitType.GetChildSpriteName();
-                foreach (var portraitType in fallbacks)
+                foreach (var portraitType in character.FallbackPortraitTypes)
                 {
                     yield return portraitType.GetChildSpriteName();
                 }
