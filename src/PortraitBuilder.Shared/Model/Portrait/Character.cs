@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace PortraitBuilder.Model.Portrait
 {
@@ -13,6 +14,8 @@ namespace PortraitBuilder.Model.Portrait
         public string Properties { get; private set; } = "aa0aaaaaaaa000";
 
         public PortraitType PortraitType { get; set; }
+
+        public List<PortraitType> FallbackPortraitTypes { get; set; }
 
         /// <summary>
         /// Index of rank in border sprite
@@ -48,7 +51,7 @@ namespace PortraitBuilder.Model.Portrait
             if (string.IsNullOrEmpty(properties))
                 throw new ArgumentNullException(nameof(properties));
 
-            void ThrowForLength(string paramName) => throw new ArgumentException($"{paramName} is too short");
+            static void ThrowForLength(string paramName) => throw new ArgumentException($"{paramName} is too short");
 
             if (dna.Length < 10)
                 ThrowForLength(nameof(dna));

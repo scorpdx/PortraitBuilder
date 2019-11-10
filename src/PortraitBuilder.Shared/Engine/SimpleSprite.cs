@@ -10,10 +10,7 @@ namespace PortraitBuilder.Engine
         private IReadOnlyList<SKBitmap> _bitmaps;
         public SimpleSprite(IReadOnlyList<SKBitmap> bitmaps)
         {
-            if (bitmaps == null)
-                throw new ArgumentNullException(nameof(bitmaps));
-
-            _bitmaps = bitmaps;
+            _bitmaps = bitmaps ?? throw new ArgumentNullException(nameof(bitmaps));
         }
 
         public SKBitmap this[int index] => _bitmaps[index];

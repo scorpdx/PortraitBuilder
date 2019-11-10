@@ -9,40 +9,97 @@ using PortraitBuilder.Model;
 using SkiaSharp;
 using System.Linq;
 using System;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Buffers;
-using System.Text.Json;
-using System.Diagnostics;
+using static PortraitBuilder.Online.BlobLoader;
 
 namespace PortraitBuilder.Online
 {
     public static class PortraitFunction
     {
-        private static readonly Lazy<CloudBlobClient> _storageClient = new Lazy<CloudBlobClient>(() =>
+        [FunctionName("character")]
+        public static async Task<IActionResult> BuildCharacter(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]PortraitBuilder.Online.Models.Character characterModel)
         {
-            string storageConnectionString = Environment.GetEnvironmentVariable("PortraitPackStorage");
-            Debug.Assert(!string.IsNullOrEmpty(storageConnectionString));
+            var character = new Character();
+            character.Import(characterModel.DNA, characterModel.Properties);
+            if (Enum.TryParse(characterModel.Government, ignoreCase: true, out GovernmentType government))
+            {
+                character.Government = government;
+            }
+            if (Enum.TryParse(characterModel.Rank, ignoreCase: true, out TitleRank rank))
+            {
+                character.Rank = rank;
+            }
 
-            var storage = CloudStorageAccount.Parse(storageConnectionString);
-            return storage.CreateCloudBlobClient();
-        });
+            var portrait = await _portraitPack.Value;
+            if (!portrait.PortraitTypes.Any())
+            {
+                return new StatusCodeResult(500);
+            }
 
-        private static readonly Lazy<Task<PortraitData>> _portraitPack = new Lazy<Task<PortraitData>>(async () =>
-        {
-            var client = _storageClient.Value;
+            var cultureLookup = await _cultureLookup.Value;
+            if (!cultureLookup.Any())
+            {
+                return new StatusCodeResult(500);
+            }
 
-            var container = client.GetContainerReference("packs");
-            var blob = container.GetBlockBlobReference("portraits.json");
-            var json = await blob.DownloadTextAsync();
+            string sexSuffix = characterModel.Female.GetValueOrDefault() ? "female" : "male";
+            string periodSuffix = default;
+            if (characterModel.Year.HasValue)
+            {
+                var year = characterModel.Year.Value;
+                periodSuffix = year < 950 ? "early" : year > 1250 ? "late" : "";
+            }
 
-            var options = ContentPacks.JsonHelper.GetDefaultOptions();
-            return JsonSerializer.Deserialize<PortraitData>(json, options);
-        });
+            string ageSuffix = default;
+            if (characterModel.Age.HasValue)
+            {
+                var age = characterModel.Age.Value;
+                ageSuffix = age <= 30 ? "" : age < 50 ? "1" : "2";
+            }
 
-        private static readonly ConcurrentDictionary<string, Task<SKBitmap>> _blobTileCache = new ConcurrentDictionary<string, Task<SKBitmap>>();
+            PortraitType portraitType = default;
+            var fallbacks = new List<PortraitType>();
+            foreach (var graphicalCulture in cultureLookup[characterModel.Culture])
+            {
+                bool omitPeriod = false;
+                bool omitAge = false;
+                PortraitType foundPortraitType;
+
+                var portraitTypeName = $"PORTRAIT_{graphicalCulture}_{sexSuffix}{(omitPeriod ? "" : periodSuffix)}{(omitAge ? "" : ageSuffix)}";
+                while (!portrait.PortraitTypes.TryGetValue(portraitTypeName, out foundPortraitType))
+                {
+                    if (omitPeriod && omitAge)
+                        break;
+                    else if (!omitPeriod)
+                        omitPeriod = true;
+                    else if (!omitAge)
+                        omitAge = true;
+                }
+
+                if (foundPortraitType == null)
+                    continue;
+
+                portraitType ??= foundPortraitType;
+                fallbacks.Add(foundPortraitType);
+            }
+
+            if (portraitType == null)
+            {
+                return new StatusCodeResult(500);
+            }
+
+            character.PortraitType = portraitType;
+            character.FallbackPortraitTypes = fallbacks;
+
+            using var portraitBitmap = await DrawPortraitInternal(character);
+            using var portraitPixmap = portraitBitmap.PeekPixels();
+
+            var portraitPng = portraitPixmap.Encode(SKPngEncoderOptions.Default);
+            return new FileStreamResult(portraitPng.AsStream(), "image/png");
+        }
 
         [FunctionName("portrait")]
         public static async Task<IActionResult> DrawPortrait(
@@ -80,7 +137,11 @@ namespace PortraitBuilder.Online
                 return new StatusCodeResult(500);
             }
 
-            var basePortraitType = portrait.PortraitTypes[$"PORTRAIT_{ptBase}"];
+            if (!portrait.PortraitTypes.TryGetValue($"PORTRAIT_{ptBase}", out PortraitType basePortraitType))
+            {
+                return new StatusCodeResult(500);
+            }
+
             if (string.IsNullOrEmpty(ptClothing))
             {
                 character.PortraitType = basePortraitType;
@@ -89,6 +150,21 @@ namespace PortraitBuilder.Online
             {
                 var clothingPortraitType = portrait.PortraitTypes[$"PORTRAIT_{ptClothing}"];
                 character.PortraitType = basePortraitType.Merge(clothingPortraitType);
+            }
+
+            using var portraitBitmap = await DrawPortraitInternal(character);
+            using var portraitPixmap = portraitBitmap.PeekPixels();
+            
+            var portraitPng = portraitPixmap.Encode(SKPngEncoderOptions.Default);
+            return new FileStreamResult(portraitPng.AsStream(), "image/png");
+        }
+
+        private static async Task<SKBitmap> DrawPortraitInternal(Character character)
+        {
+            var portrait = await _portraitPack.Value;
+            if (!portrait.PortraitTypes.Any())
+            {
+                throw new InvalidOperationException("no PortraitTypes found in loaded portrait pack");
             }
 
             var steps = PortraitBuilder.Engine.PortraitBuilder.BuildCharacter(character, portrait.Sprites)
@@ -136,15 +212,12 @@ namespace PortraitBuilder.Online
                 step.Tile = await bitmapTask;
             }
 
-            var bmp = PortraitRenderer.DrawPortrait(steps);
-            var png = SKImage.FromBitmap(bmp).Encode();
-
+            var portraitBitmap = PortraitRenderer.DrawPortrait(steps);
             foreach (var array in bitmapTasks.Values)
             {
                 ArrayPool<Task<SKBitmap>>.Shared.Return(array);
             }
-
-            return new FileStreamResult(png.AsStream(), "image/png");
+            return portraitBitmap;
         }
 
         [FunctionName("portraittypes")]

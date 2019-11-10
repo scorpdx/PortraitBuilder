@@ -341,9 +341,9 @@ namespace PortraitBuilder.UI
 #if DEBUG
             host = "http://localhost:7071";
 #else
-            host = "https://portraitbuilder.azurewebsites.net";
+            host = "https://portraits.ga";
 #endif
-            var baseUrl = $"{host}/api/portrait?dna={character.DNA}&properties={character.Properties}&base={@base}";
+            var baseUrl = $"{host}/portrait?dna={character.DNA}&properties={character.Properties}&base={@base}";
             var clothingUrl = !string.IsNullOrEmpty(clothing) ? $"&clothing={clothing}" : string.Empty;
             var govtUrl = $"&government={character.Government}";
             var titleUrl = character.Rank != TitleRank.None ? $"&titlerank={character.Rank}" : string.Empty;
