@@ -28,10 +28,10 @@ namespace PortraitBuilder.Model.Portrait
 
             foreach (Layer baseLayer in basePortraitType.Layers)
             {
-                Layer mergeLayer = baseLayer;
-                if (baseLayer.CultureIndex.HasValue)
+                var mergeLayer = baseLayer;
+                if (baseLayer.CultureIndex != -1)
                 {
-                    var overrideLayer = clothingPortraitType.GetCultureLayer(baseLayer.CultureIndex.Value);
+                    var overrideLayer = clothingPortraitType.GetCultureLayer(baseLayer.CultureIndex);
                     if (overrideLayer != null)
                     {
                         logger.LogDebug("Overriding layer {0} with {1}", baseLayer, overrideLayer);
@@ -46,7 +46,6 @@ namespace PortraitBuilder.Model.Portrait
                         };
                     }
                 }
-
                 mergedPortraitType.Layers.Add(mergeLayer);
             }
 
