@@ -63,6 +63,22 @@ namespace PortraitBuilder.Online
                 character.IsChild = age < 16;
             }
 
+            var religiousLookup = await _religiousClothingLookup.Value;
+            if (characterModel.Religion != null && religiousLookup.TryGetValue(characterModel.Religion, out (int, int) clothingInfo))
+            {
+                var religiousClothingHead = clothingInfo.Item1;
+                var religiousClothingPriest = clothingInfo.Item2;
+
+                if (characterModel.ReligiousHead.GetValueOrDefault())
+                {
+                    character.ReligiousClothingOverride = religiousClothingHead;
+                }
+                else if (character.Government == GovernmentType.Theocracy)
+                {
+                    character.ReligiousClothingOverride = religiousClothingPriest;
+                }
+            }
+
             PortraitType portraitType = default;
             var fallbacks = new List<PortraitType>();
             foreach (var graphicalCulture in cultureLookup[characterModel.Culture])
@@ -158,7 +174,7 @@ namespace PortraitBuilder.Online
 
             using var portraitBitmap = await DrawPortraitInternal(character);
             using var portraitPixmap = portraitBitmap.PeekPixels();
-            
+
             var portraitPng = portraitPixmap.Encode(SKPngEncoderOptions.Default);
             return new FileStreamResult(portraitPng.AsStream(), "image/png");
         }

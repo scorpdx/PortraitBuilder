@@ -19,6 +19,8 @@ namespace PortraitBuilder.Model.Portrait
 
         public bool IsChild { get; set; }
 
+        public int? ReligiousClothingOverride { get; set; }
+
         /// <summary>
         /// Index of rank in border sprite
         /// </summary>

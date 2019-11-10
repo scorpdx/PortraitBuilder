@@ -145,7 +145,13 @@ namespace PortraitBuilder.Engine
                 return false;
             }
 
-            tileIndex = Character.GetIndex(letter, frameCount);
+            if(character.ReligiousClothingOverride.HasValue && layer.Characteristic == DefaultCharacteristics.HEADGEAR)
+            {
+                tileIndex = character.ReligiousClothingOverride.Value;
+            } else
+            {
+                tileIndex = Character.GetIndex(letter, frameCount);
+            }
             logger.LogDebug($"Layer letter: {letter}, Tile Index: {tileIndex}");
 
             return true;
