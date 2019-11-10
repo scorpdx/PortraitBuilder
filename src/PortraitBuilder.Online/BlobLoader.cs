@@ -23,7 +23,7 @@ namespace PortraitBuilder.Online
             return storage.CreateCloudBlobClient();
         });
 
-        internal static readonly Lazy<ValueTask<PortraitData>> _portraitPack = new Lazy<ValueTask<PortraitData>>(async () =>
+        internal static readonly Lazy<Task<PortraitData>> _portraitPack = new Lazy<Task<PortraitData>>(async () =>
         {
             var client = _storageClient.Value;
 
@@ -35,7 +35,7 @@ namespace PortraitBuilder.Online
             return JsonSerializer.Deserialize<PortraitData>(json, options);
         });
 
-        internal static readonly Lazy<ValueTask<IReadOnlyDictionary<string, IEnumerable<string>>>> _cultureLookup = new Lazy<ValueTask<IReadOnlyDictionary<string, IEnumerable<string>>>>(async () =>
+        internal static readonly Lazy<Task<IReadOnlyDictionary<string, IEnumerable<string>>>> _cultureLookup = new Lazy<Task<IReadOnlyDictionary<string, IEnumerable<string>>>>(async () =>
         {
             var client = _storageClient.Value;
 
