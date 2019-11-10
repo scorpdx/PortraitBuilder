@@ -17,6 +17,8 @@ namespace PortraitBuilder.Model.Portrait
 
         public List<PortraitType> FallbackPortraitTypes { get; set; }
 
+        public bool IsChild { get; set; }
+
         /// <summary>
         /// Index of rank in border sprite
         /// </summary>

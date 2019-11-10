@@ -3,6 +3,8 @@ using PortraitBuilder.Model;
 using PortraitBuilder.Model.Portrait;
 using SkiaSharp;
 using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace PortraitBuilder.Engine
 {
@@ -63,6 +65,28 @@ namespace PortraitBuilder.Engine
                 yield return BuildLayer(layer, character, sprites);
             }
 
+            yield return BuildBorder(character, sprites);
+        }
+
+        public static IEnumerable<TileRenderStep> BuildChild(Character character, Dictionary<string, SpriteDef> sprites)
+        {
+            IEnumerable<string> GetPossibleSpriteNames()
+            {
+                yield return character.PortraitType.GetChildSpriteName();
+                foreach (var portraitType in character.FallbackPortraitTypes)
+                {
+                    yield return portraitType.GetChildSpriteName();
+                }
+            }
+
+            var spriteDef = GetPossibleSpriteNames()
+                .Intersect(sprites.Keys)
+                .Select(spriteName => sprites[spriteName])
+                .FirstOrDefault();
+            if (spriteDef == null)
+                throw new InvalidOperationException("Could not find child sprite def");
+
+            yield return BuildSpriteTile(character, spriteDef, 0);
             yield return BuildBorder(character, sprites);
         }
 
@@ -129,7 +153,6 @@ namespace PortraitBuilder.Engine
 
         private static TileRenderStep? BuildTile(Character character, Layer layer, SpriteDef def, int tileIndex)
         {
-            var tileOffset = new SKPointI(12 + layer.Offset.X, 12 + 152 /*- tile.Height*/ - layer.Offset.Y);
             if (layer.IsHair)
             {
                 var hairColors = character.PortraitType.HairColours;
@@ -140,6 +163,7 @@ namespace PortraitBuilder.Engine
                 }
 
                 int hairIndex = Character.GetIndex(hairChar, hairColors.Count);
+                var tileOffset = new SKPointI(12 + layer.Offset.X, 12 + 152 - layer.Offset.Y);
                 return new HairRenderStep
                 {
                     Def = def,
@@ -158,6 +182,7 @@ namespace PortraitBuilder.Engine
                 }
 
                 int eyeIndex = Character.GetIndex(eyeChar, eyeColors.Count);
+                var tileOffset = new SKPointI(12 + layer.Offset.X, 12 + 152 - layer.Offset.Y);
                 return new EyeRenderStep
                 {
                     Def = def,
@@ -168,13 +193,19 @@ namespace PortraitBuilder.Engine
             }
             else
             {
-                return new TileRenderStep
-                {
-                    Def = def,
-                    TileIndex = tileIndex,
-                    TileOffset = tileOffset,
-                };
+                return BuildSpriteTile(character, def, tileIndex, layer.Offset);
             }
+        }
+
+        private static TileRenderStep? BuildSpriteTile(Character character, SpriteDef def, int tileIndex, System.Drawing.Point offset = default)
+        {
+            var tileOffset = new SKPointI(12 + offset.X, 12 + 152 /*- tile.Height*/ - offset.Y);
+            return new TileRenderStep
+            {
+                Def = def,
+                TileIndex = tileIndex,
+                TileOffset = tileOffset,
+            };
         }
     }
 }
